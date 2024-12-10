@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react'
 import { csv } from 'd3'
 import Mapcontainer from './Mapcontainer'
 import Chartcontainer from './Chartcontainer'
+import Multichart from './Multichart'
 
 const Container = () => {
   const [showMap, setShowMap] = useState(true)
@@ -22,6 +23,7 @@ const Container = () => {
     <div>
       {showMap && <Mapcontainer data={data} />}
       {showChart && <Chartcontainer data={data} />}
+      <Multichart data={data} />
     </div>
   )
 }
