@@ -10,14 +10,14 @@ const Container = () => {
   const [showChart, setShowChart] = useState(false)
   const [data, setData] = useState(null)
 
-  useEffect(() => {
-    csv('/Airline_Delay_Cause.csv').then(csvData => {
-      setData(csvData)
-      console.log(csvData)
-    }).catch(error => {
-      console.error('Error loading CSV:', error)
-    })
-  }, [])
+  // useEffect(() => {
+  //   csv('/Airline_Delay_Cause.csv').then(csvData => {
+  //     setData(csvData)
+  //     console.log(csvData)
+  //   }).catch(error => {
+  //     console.error('Error loading CSV:', error)
+  //   })
+  // }, [])
 
   return (
     <div>
