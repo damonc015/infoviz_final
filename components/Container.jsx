@@ -220,6 +220,7 @@ const Container = () => {
         <Chartcontainer
           data={airportData}
           mainAirport={mainAirport}
+          drawerControls={drawerControls}
         />
       )}
       {showChart === 'compareAirports' && (
