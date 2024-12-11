@@ -1,64 +1,66 @@
-import React, { useState, useMemo } from 'react'
+import React, { useMemo } from 'react'
 import AirportSelection from './multicharts/AirportSelection'
 import AirlineSelection from './multicharts/AirlineSelection'
 import Selection from './multicharts/Selection'
-import { Grid, GridItem, Flex, Button, Menu, MenuButton, MenuList, MenuItem } from '@chakra-ui/react'
-import { v4 as uuidv4 } from 'uuid';
+import {
+  Grid,
+  GridItem,
+  Flex,
+  Button,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem
+} from '@chakra-ui/react'
 
-const Multichart = ({ type, data, drawerControls }) => {
-  const [airports, setAirports] = useState([
-    { id: uuidv4(), name: 'JFK' },
-    { id: uuidv4(), name: 'LAX' },
-    { id: uuidv4(), name: 'ORD' },
-    { id: uuidv4(), name: 'ATL' }
-  ])
-
-  const [airlines, setAirlines] = useState(() => {
-    const initialAirlines = Object.keys(data || {})
-      .slice(0, 2)
-      .map(airlineName => ({
-        id: uuidv4(),
-        name: airlineName,
-        years: data[airlineName] || {}
-      }));
-    return initialAirlines;
-  });
-
+const Multichart = ({
+  type,
+  data,
+  drawerControls,
+  airports,
+  setAirports,
+  airlines,
+  setAirlines
+}) => {
   const allAirlines = useMemo(() => {
     return Object.keys(data || {})
-      .filter(airlineName => !airlines.some(airline => airline.name === airlineName))
-      .map(airlineName => ({
-        id: uuidv4(),
+      .filter((airlineName) => !airlines?.some((airline) => airline.name === airlineName))
+      .map((airlineName) => ({
+        id: airlineName,
         name: airlineName,
         years: data[airlineName] || {}
-      }));
-  }, [data, airlines]);
+      }))
+  }, [data, airlines])
 
   const handleRemoveAirport = (id) => {
-    setAirports(prevAirports => prevAirports.filter(airport => airport.id !== id));
-  };
+    setAirports((prevAirports) => prevAirports.filter((airport) => airport.id !== id))
+  }
 
   const handleRemoveAirline = (id) => {
-    setAirlines(prevAirlines => prevAirlines.filter(airline => airline.id !== id));
-  };
+    setAirlines((prevAirlines) => prevAirlines.filter((airline) => airline.id !== id))
+  }
 
   const handleUpdateAirline = (currentId, newAirline) => {
-    setAirlines(prevAirlines =>
-      prevAirlines.map(airline =>
-        airline.id === currentId ? newAirline : airline
-      )
-    );
-  };
+    setAirlines((prevAirlines) =>
+      prevAirlines.map((airline) => (airline.id === currentId ? newAirline : airline))
+    )
+  }
 
   return (
     <Flex flex="1" overflowY="auto">
       <Grid
-        templateColumns={`repeat(${type === 'airports' ?
-          (airports.length < 5 ? airports.length + 1 : 5) :
-          (airlines.length < 5 ? airlines.length + 1 : 5)}, 1fr)`}
+        templateColumns={`repeat(${
+          type === 'airports'
+            ? airports.length < 4
+              ? airports.length + 1
+              : 4
+            : airlines.length < 4
+            ? airlines.length + 1
+            : 4
+        }, 1fr)`}
         gap={0.5}
         w="100%">
-        {(type === 'airports' ? airports : airlines).slice(0, 5).map((item) => (
+        {(type === 'airports' ? airports : airlines).slice(0, 4).map((item) => (
           <GridItem
             key={item.id}
             h="100%"
@@ -83,7 +85,7 @@ const Multichart = ({ type, data, drawerControls }) => {
             )}
           </GridItem>
         ))}
-        {(type === 'airports' ? airports.length : airlines.length) < 5 && (
+        {(type === 'airports' ? airports.length : airlines.length) < 4 && (
           <GridItem
             h="100%"
             display="flex"
@@ -105,23 +107,17 @@ const Multichart = ({ type, data, drawerControls }) => {
                   borderRadius="none"
                   sx={{
                     _hover: {
-                      bgColor: "#466a9e",
-                      color: "white",
-                    },
-                  }}
-                >
+                      bgColor: '#466a9e',
+                      color: 'white'
+                    }
+                  }}>
                   Add Airline +
                 </MenuButton>
-                <MenuList
-                  maxH="50vh"
-                  overflowY="auto"
-                  placement="right-start"
-                >
+                <MenuList maxH="50vh" overflowY="auto" placement="right-start">
                   {allAirlines.map((airline) => (
                     <MenuItem
                       key={airline.id}
-                      onClick={() => setAirlines(prev => [...prev, airline])}
-                    >
+                      onClick={() => setAirlines((prev) => [...prev, airline])}>
                       {airline.name}
                     </MenuItem>
                   ))}

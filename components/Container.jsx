@@ -24,6 +24,23 @@ const Container = () => {
   const [showChart, setShowChart] = useState('single')
   const [airportData, setAirportData] = useState(null)
   const [airlinesData, setAirlinesData] = useState(null)
+  const [airports, setAirports] = useState([
+    { id: 'JFK', name: 'JFK' },
+    { id: 'LAX', name: 'LAX' },
+    { id: 'ORD', name: 'ORD' },
+    { id: 'ATL', name: 'ATL' }
+  ]);
+
+  const [airlines, setAirlines] = useState(() => {
+    if (!airlinesData) return [];
+    return Object.keys(airlinesData)
+      .slice(0, 2)
+      .map(airlineName => ({
+        id: airlineName,
+        name: airlineName,
+        years: airlinesData[airlineName] || {}
+      }));
+  });
 
   const drawerControls = { onOpen, onClose }
 
@@ -198,6 +215,8 @@ const Container = () => {
           type="airports"
           data={airportData}
           drawerControls={drawerControls}
+          airports={airports}
+          setAirports={setAirports}
         />
       )}
       {showChart === 'compareAirlines' && (
@@ -205,6 +224,8 @@ const Container = () => {
           type="airlines"
           data={airlinesData}
           drawerControls={drawerControls}
+          airlines={airlines}
+          setAirlines={setAirlines}
         />
       )}
     </Flex>

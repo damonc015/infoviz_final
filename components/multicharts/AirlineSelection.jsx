@@ -79,7 +79,7 @@ const AirlineSelection = ({ airlineData, onRemove, availableAirlines, onUpdate }
           ✕
         </Button>
       </Box>
-      <p>{airlineData.name}</p>
+      <Text my={2} fontWeight="bold">{airlineData.name}</Text>
       {rangeValues[0] === rangeValues[1] ? (
         <Flex justify="center" w="90%" mb={2}>
           <Box textAlign="center">

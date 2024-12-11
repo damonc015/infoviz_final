@@ -51,7 +51,7 @@ const AirportSelection = ({ airportData, drawerControls, onRemove }) => {
           ✕
         </Button>
       </Box>
-      <p>{airportData.name}</p>
+      <Text my={2} fontWeight="bold">{airportData.name}</Text>
       {rangeValues[0] === rangeValues[1] ? (
         <Flex justify="center" w="90%" mb={2}>
           <Box textAlign="center">
