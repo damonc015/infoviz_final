@@ -47,7 +47,6 @@ const AirlineSelection = ({ airlineData, onRemove, availableAirlines, onUpdate }
           <MenuList
             maxH="50vh"
             overflowY="auto"
-            placement="right-start"
           >
             {availableAirlines.map((airline) => (
               <MenuItem

@@ -113,7 +113,7 @@ const Multichart = ({
                   }}>
                   Add Airline +
                 </MenuButton>
-                <MenuList maxH="50vh" overflowY="auto" placement="right-start">
+                <MenuList maxH="50vh" overflowY="auto">
                   {allAirlines.map((airline) => (
                     <MenuItem
                       key={airline.id}

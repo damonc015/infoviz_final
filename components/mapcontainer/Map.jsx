@@ -2,65 +2,104 @@
 import React, { useEffect, useRef, useState, memo } from 'react'
 import * as d3 from 'd3'
 import * as turf from '@turf/turf'
-
-const airportCoordinates = {
-  "JFK": { lat: 40.6413, lon: -73.7781 },
-  "LAX": { lat: 33.9416, lon: -118.4085 },
-  "ORD": { lat: 41.9742, lon: -87.9073 },
-}
+import { Center, Spinner } from '@chakra-ui/react'
+import { scaleLinear } from 'd3'
 
 const regionStates = {
-  newEngland: ['ME', 'NH', 'VT', 'MA', 'RI', 'CT'],
-  midAtlantic: ['NY', 'NJ', 'PA', 'DE', 'MD', 'DC'],
-  south: ['VA', 'WV', 'NC', 'SC', 'GA', 'FL', 'KY', 'TN', 'AL', 'MS', 'AR', 'LA'],
-  midwest: ['OH', 'MI', 'IN', 'IL', 'WI', 'MN', 'IA', 'MO', 'ND', 'SD', 'NE', 'KS'],
-  southwest: ['TX', 'OK', 'NM', 'AZ'],
-  west: ['AK', 'CA', 'CO', 'HI', 'ID', 'MT', 'NV', 'OR', 'UT', 'WA', 'WY']
+  newEngland: ['Maine', 'New Hampshire', 'Vermont', 'Massachusetts', 'Rhode Island', 'Connecticut'],
+  midAtlantic: [
+    'New York',
+    'New Jersey',
+    'Pennsylvania',
+    'Delaware',
+    'Maryland',
+    'District of Columbia'
+  ],
+  south: [
+    'Virginia',
+    'West Virginia',
+    'North Carolina',
+    'South Carolina',
+    'Georgia',
+    'Florida',
+    'Kentucky',
+    'Tennessee',
+    'Alabama',
+    'Mississippi',
+    'Arkansas',
+    'Louisiana'
+  ],
+  midwest: [
+    'Ohio',
+    'Michigan',
+    'Indiana',
+    'Illinois',
+    'Wisconsin',
+    'Minnesota',
+    'Iowa',
+    'Missouri',
+    'North Dakota',
+    'South Dakota',
+    'Nebraska',
+    'Kansas'
+  ],
+  southwest: ['Texas', 'Oklahoma', 'New Mexico', 'Arizona'],
+  west: [
+    'Alaska',
+    'California',
+    'Colorado',
+    'Hawaii',
+    'Idaho',
+    'Montana',
+    'Nevada',
+    'Oregon',
+    'Utah',
+    'Washington',
+    'Wyoming'
+  ]
 }
 
 const getRegionForSelection = (selection) => {
   switch (selection) {
-    case 1:
+    case 'all':
+      return ['newEngland', 'midAtlantic', 'south', 'midwest', 'southwest', 'west']
+    case '1':
       return ['newEngland']
-    case 2:
+    case '2':
       return ['midAtlantic']
-    case 3:
+    case '3':
       return ['south']
-    case 4:
+    case '4':
       return ['midwest']
-    case 5:
+    case '5':
       return ['southwest']
-    case 6:
+    case '6':
       return ['west']
     default:
       return ['newEngland', 'midAtlantic', 'south', 'midwest', 'southwest', 'west']
   }
 }
 
-const Map = memo(({ data, selectedYear, selectedRegion }) => {
+const Map = memo(({ data, selectedYear, selectedRegion, showAllAirports, metricType, metrics, onAirportSelect }) => {
   const svgRef = useRef(null)
-  const [mapInitialized, setMapInitialized] = useState(false)
-  const [geoData, setGeoData] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [airports, setAirports] = useState([])
+  const [geoData, setGeoData] = useState(null)
+  const [validAirportPoints, setValidAirportPoints] = useState([])
+  const [airportDelayData, setAirportDelayData] = useState({})
 
-  // Load GeoJSON data separately
   useEffect(() => {
     const loadGeoData = async () => {
       try {
         const data = await d3.json('/gz_2010_us_040_00_5m.json')
 
-        // Define the regions using Turf.js
-        const activeRegions = getRegionForSelection(selectedRegion);
-        const activeStates = activeRegions.flatMap(region => regionStates[region]);
+        // get states of active region
+        const activeRegions = getRegionForSelection(selectedRegion)
+        const activeStates = activeRegions.flatMap((region) => regionStates[region])
 
-        // Use Turf.js to filter features based on the selected quarter's regions
+        // match states to geojson states
         const filteredFeatures = turf.featureCollection(
-          data.features.filter(feature =>
-            activeStates.includes(feature.properties.STATE)
-          )
-        );
-
+          data.features.filter((feature) => activeStates.includes(feature.properties.NAME))
+        )
         setGeoData(filteredFeatures)
         setIsLoading(false)
       } catch (error) {
@@ -74,61 +113,131 @@ const Map = memo(({ data, selectedYear, selectedRegion }) => {
   // Filter airports based on selected year and quarter
   useEffect(() => {
     if (data && geoData) {
-      const activeRegions = getRegionForSelection(selectedRegion);
-      const activeStates = activeRegions.flatMap(region => regionStates[region]);
+      // Create points for all valid coordinates
+      const filteredPoints = Object.entries(data)
+        .map(([airportName, coords]) => {
+          const point = turf.point([coords.longitude, coords.latitude])
 
-      const dataArray = Object.values(data);
+          // Check if the point is within any of the selected region's features
+          const isInRegion = geoData.features.some((feature) =>
+            turf.booleanPointInPolygon(point, feature)
+          )
 
-      const filteredData = dataArray.filter(d => {
-        if (typeof d.longitude !== 'number' || typeof d.latitude !== 'number') {
-          return false;
-        }
-
-        // Create a point for the airport's location
-        const point = turf.point([d.longitude, d.latitude]);
-
-        // Check if the point is within any of the selected region's features
-        const isInRegion = geoData.features.some(feature =>
-          turf.booleanPointInPolygon(point, feature)
-        );
-
-        return d.year === selectedYear && isInRegion;
-      });
-
-      // Get unique airports from filtered data
-      const airports = [...new Set(filteredData.map(d => d.airport))]
-        .map(airport => {
-          const airportData = airportCoordinates[airport] || {}
-          return {
-            name: airport,
-            lat: airportData.latitude,
-            lon: airportData.longitude
-          }
+          return isInRegion
+            ? {
+                name: airportName,
+                lat: coords.latitude,
+                lon: coords.longitude
+              }
+            : null
         })
-        .filter(airport => airport.lat && airport.lon)
-      console.log(airports)
-      setAirports(airports)
+        .filter((airport) => airport !== null)
+
+      setValidAirportPoints(filteredPoints)
     }
   }, [data, selectedYear, selectedRegion, geoData])
 
+  // Add new useEffect to process delay data
+  useEffect(() => {
+    if (!data || !selectedYear) return
+
+    const airportDelays = {}
+
+    // Debug log to see what years are available in the data
+    console.log('Available years in data:', Object.keys(Object.values(data)[0]))
+    console.log('Selected year:', selectedYear)
+    console.log('Sample airport data structure:', data[Object.keys(data)[0]])
+
+    // Process each airport's data
+    Object.entries(data).forEach(([airportCode, airportData]) => {
+      const yearData = airportData[selectedYear]
+      if (!yearData) return
+
+      // Initialize this airport in our results
+      if (!airportDelays[airportCode]) {
+        airportDelays[airportCode] = { totalDelay: 0, totalFlights: 0 }
+      }
+
+      // Sum up all delays for this airport across all months and airlines
+      Object.values(yearData).forEach((monthData) => {
+        Object.values(monthData).forEach((airlineStats) => {
+          airportDelays[airportCode].totalDelay += airlineStats.arr_delay || 0
+          airportDelays[airportCode].totalFlights += airlineStats.arr_flights || 0
+        })
+      })
+
+      // Calculate average delay for this airport
+      if (airportDelays[airportCode].totalFlights > 0) {
+        airportDelays[airportCode].avgDelay =
+          airportDelays[airportCode].totalDelay / airportDelays[airportCode].totalFlights
+      }
+    })
+
+    console.log('Final airport delays:', airportDelays)
+
+    setAirportDelayData(airportDelays)
+  }, [data, selectedYear])
+
+  const getMetricValue = (airportData) => {
+    if (!airportData) return null
+    switch (metricType) {
+      case 'avgDelay':
+        return airportData.avgDelay
+      case 'totalFlights':
+        return airportData.totalFlights
+      case 'totalDelay':
+        return airportData.totalDelay
+      default:
+        return airportData.avgDelay
+    }
+  }
+
+  const getMetricLabel = (value) => {
+    if (value === null) return ''
+    switch (metricType) {
+      case 'avgDelay':
+        return `${value.toFixed(2)} minutes`
+      case 'totalFlights':
+        return `${value.toLocaleString()} flights`
+      case 'totalDelay':
+        return `${(value/60).toFixed(0)} hours`
+      default:
+        return `${value.toFixed(2)} minutes`
+    }
+  }
+
   // Initialize map only after data is loaded
   useEffect(() => {
-    if (!mapInitialized && !isLoading && geoData && svgRef.current) {
+    if (!isLoading && geoData && svgRef.current) {
       const container = svgRef.current.parentElement
       const width = container.clientWidth
       const height = container.clientHeight
 
-      const svg = d3.select(svgRef.current)
+      // Get min and max delays for the current year only
+      const currentYearDelays = Object.values(airportDelayData)
+        .map(d => getMetricValue(d))
+        .filter(value => value !== null)
+
+      const minValue = Math.min(...currentYearDelays)
+      const maxValue = Math.max(...currentYearDelays)
+
+      console.log(`Year ${selectedYear} delay range:`, { minValue, maxValue })
+
+      const colorScale = scaleLinear()
+        .domain([minValue, maxValue])
+        .range(['#00ff00', '#ff0000']) // green to red
+        .clamp(true)
+
+      const svg = d3
+        .select(svgRef.current)
         .attr('width', '100%')
         .attr('height', '100%')
         .attr('viewBox', `0 0 ${width} ${height}`)
         .attr('preserveAspectRatio', 'xMidYMid meet')
 
-      const projection = d3.geoAlbersUsa()
-        .fitSize([width, height], geoData)
+      const projection = d3.geoAlbersUsa().fitSize([width, height], geoData)
 
-      const path = d3.geoPath()
-        .projection(projection)
+      const path = d3.geoPath().projection(projection)
 
       // Create a group for all map elements
       const g = svg.append('g')
@@ -146,53 +255,74 @@ const Map = memo(({ data, selectedYear, selectedRegion }) => {
 
       // Add airports
       g.selectAll('circle')
-        .data(airports)
+        .data(validAirportPoints)
         .enter()
         .append('circle')
-        .attr('cx', d => {
-          const coords = projection([d.lon, d.lat]);
-          return coords ? coords[0] : null;
+        .attr('cx', (d) => {
+          const coords = projection([d.lon, d.lat])
+          return coords ? coords[0] : null
         })
-        .attr('cy', d => {
-          const coords = projection([d.lon, d.lat]);
-          return coords ? coords[1] : null;
+        .attr('cy', (d) => {
+          const coords = projection([d.lon, d.lat])
+          return coords ? coords[1] : null
         })
-        .attr('r', 5)
-        .style('fill', 'red')
-        .style('opacity', d => {
-          const coords = projection([d.lon, d.lat]);
-          return coords ? 0.7 : 0;  // Hide airports that couldn't be projected
+        .attr('r', 6)
+        .style('fill', (d) => {
+          const delayData = airportDelayData[d.name]
+          const metricValue = getMetricValue(delayData)
+          return metricValue !== null ? colorScale(metricValue) : '#gray'
         })
-        .on('mouseover', function(event, d) {
-          const coords = projection([d.lon, d.lat]);
-          if (!coords) return;  // Skip if coordinates couldn't be projected
+        .style('opacity', (d) => {
+          const coords = projection([d.lon, d.lat])
+          if (!coords) return 0
+          const delayData = airportDelayData[d.name]
+          const metricValue = getMetricValue(delayData)
+          return (showAllAirports || metricValue !== null) ? 0.7 : 0
+        })
+        .style('cursor', 'pointer')
+        .on('mouseover', function (event, d) {
+          const coords = projection([d.lon, d.lat])
+          if (!coords) return
 
-          d3.select(this)
-            .transition()
-            .duration(200)
-            .attr('r', 8)
+          d3.select(this).transition().duration(200).attr('r', 9)
+
+          const delayData = airportDelayData[d.name]
+          const metricValue = getMetricValue(delayData)
+          const tooltipText = metricValue !== null
+            ? `${d.name}\n${metrics.find(m => m.value === metricType).label}: ${getMetricLabel(metricValue)}`
+            : d.name
 
           g.append('text')
             .attr('class', 'tooltip')
             .attr('x', coords[0] + 10)
             .attr('y', coords[1])
-            .text(d.name)
+            .text(tooltipText)
             .style('fill', 'black')
             .style('font-size', '12px')
         })
-        .on('mouseout', function() {
-          d3.select(this)
-            .transition()
-            .duration(200)
-            .attr('r', 5)
+        .on('mouseout', function () {
+          d3.select(this).transition().duration(200).attr('r', 6)
 
           g.selectAll('.tooltip').remove()
+        })
+        .on('click', function(event, d) {
+          // Find the full airport name from the data object
+          const airportKey = Object.keys(data).find(key => key.includes(d.name));
+          if (airportKey && onAirportSelect) {
+            onAirportSelect(airportKey);
+          }
         })
 
       // Handle window resize
       const handleResize = () => {
         const newWidth = container.clientWidth
         const newHeight = container.clientHeight
+
+        // Clear the entire SVG
+        svg.selectAll('*').remove()
+
+        // Create a new group after clearing
+        const g = svg.append('g')
 
         svg
           .attr('width', '100%')
@@ -201,31 +331,106 @@ const Map = memo(({ data, selectedYear, selectedRegion }) => {
 
         projection.fitSize([newWidth, newHeight], geoData)
 
-        // Update paths and circles
-        g.selectAll('path').attr('d', path)
+        // Draw states
+        g.selectAll('path')
+          .data(geoData.features)
+          .enter()
+          .append('path')
+          .attr('d', path)
+          .attr('class', 'state')
+          .style('fill', '#ddd')
+          .style('stroke', '#fff')
+          .style('stroke-width', '1px')
+
+        // Create color scale
+        const currentMetricValues = Object.values(airportDelayData)
+          .map(d => getMetricValue(d))
+          .filter(value => value !== null)
+
+        const minValue = Math.min(...currentMetricValues)
+        const maxValue = Math.max(...currentMetricValues)
+
+        const colorScale = scaleLinear()
+          .domain([minValue, maxValue])
+          .range(['#00ff00', '#ff0000'])
+          .clamp(true)
+
+        // Add airports
         g.selectAll('circle')
-          .attr('cx', d => {
-            const coords = projection([d.lon, d.lat]);
-            return coords ? coords[0] : null;
+          .data(validAirportPoints)
+          .enter()
+          .append('circle')
+          .attr('cx', (d) => {
+            const coords = projection([d.lon, d.lat])
+            return coords ? coords[0] : null
           })
-          .attr('cy', d => {
-            const coords = projection([d.lon, d.lat]);
-            return coords ? coords[1] : null;
+          .attr('cy', (d) => {
+            const coords = projection([d.lon, d.lat])
+            return coords ? coords[1] : null
+          })
+          .attr('r', 6)
+          .style('fill', (d) => {
+            const delayData = airportDelayData[d.name]
+            const metricValue = getMetricValue(delayData)
+            return metricValue !== null ? colorScale(metricValue) : '#gray'
+          })
+          .style('opacity', (d) => {
+            const coords = projection([d.lon, d.lat])
+            if (!coords) return 0
+            const delayData = airportDelayData[d.name]
+            const metricValue = getMetricValue(delayData)
+            return (showAllAirports || metricValue !== null) ? 0.7 : 0
+          })
+          .style('cursor', 'pointer')
+          .on('mouseover', function (event, d) {
+            const coords = projection([d.lon, d.lat])
+            if (!coords) return
+
+            d3.select(this).transition().duration(200).attr('r', 9)
+
+            const delayData = airportDelayData[d.name]
+            const metricValue = getMetricValue(delayData)
+            const tooltipText = metricValue !== null
+              ? `${d.name}\n${metrics.find(m => m.value === metricType).label}: ${getMetricLabel(metricValue)}`
+              : d.name
+
+            g.append('text')
+              .attr('class', 'tooltip')
+              .attr('x', coords[0] + 10)
+              .attr('y', coords[1])
+              .text(tooltipText)
+              .style('fill', 'black')
+              .style('font-size', '12px')
+          })
+          .on('mouseout', function () {
+            d3.select(this).transition().duration(200).attr('r', 6)
+
+            g.selectAll('.tooltip').remove()
+          })
+          .on('click', function(event, d) {
+            // Find the full airport name from the data object
+            const airportKey = Object.keys(data).find(key => key.includes(d.name));
+            if (airportKey && onAirportSelect) {
+              onAirportSelect(airportKey);
+            }
           })
       }
 
       window.addEventListener('resize', handleResize)
-      setMapInitialized(true)
 
       // Cleanup
       return () => {
         window.removeEventListener('resize', handleResize)
       }
     }
-  }, [mapInitialized, isLoading, geoData, airports])
+  }, [isLoading, geoData, validAirportPoints, airportDelayData, showAllAirports, metricType])
 
   if (isLoading) {
-    return <div>Loading map data...</div>
+    return (
+      <Center h="100%">
+        <Spinner thickness="4px" speed="0.65s" emptyColor="gray.200" color="blue.500" size="xl" />
+      </Center>
+    )
   }
 
   return (

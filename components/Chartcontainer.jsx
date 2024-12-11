@@ -1,11 +1,11 @@
 'use client'
 import React from 'react'
 
-
-const Chartcontainer = () => {
+const Chartcontainer = ({ data, mainAirport }) => {
   return (
     <div>
-      
+      {/* <Chart /> */}
+      {mainAirport && <div>Selected Airport: {mainAirport}</div>}
     </div>
   )
 }

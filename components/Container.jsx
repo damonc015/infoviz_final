@@ -22,6 +22,7 @@ import {
 const Container = () => {
   const { isOpen, onOpen, onClose } = useDisclosure()
   const [showChart, setShowChart] = useState('single')
+  const [mainAirport, setMainAirport] = useState('New York, NY: John F. Kennedy International')
   const [airportData, setAirportData] = useState(null)
   const [airlinesData, setAirlinesData] = useState(null)
   const [airports, setAirports] = useState([
@@ -204,12 +205,23 @@ const Container = () => {
           <DrawerCloseButton size="lg" p={6} fontSize="20px" />
           <DrawerHeader>Select Airport</DrawerHeader>
           <DrawerBody>
-            <Mapcontainer data={airportData} />
+            <Mapcontainer
+              data={airportData}
+              onAirportSelect={(airport) => {
+                setMainAirport(airport);
+                onClose(); // Close the drawer after selection
+              }}
+            />
           </DrawerBody>
         </DrawerContent>
       </Drawer>
 
-      {showChart === 'single' && <Chartcontainer data={airportData} />}
+      {showChart === 'single' && (
+        <Chartcontainer
+          data={airportData}
+          mainAirport={mainAirport}
+        />
+      )}
       {showChart === 'compareAirports' && (
         <Multichart
           type="airports"
