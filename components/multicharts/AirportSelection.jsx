@@ -10,29 +10,47 @@ import {
   Flex
 } from '@chakra-ui/react'
 
-const AirportSelection = ({ airportData, drawerControls }) => {
+const AirportSelection = ({ airportData, drawerControls, onRemove }) => {
   const [rangeValues, setRangeValues] = useState([2013, 2013])
 
   return (
     <>
-      <Button
-        variant="solid"
-        size="md"
-        bgColor="#5686c2"
-        color="white"
-        w="100%"
-        borderRadius="none"
-        mt={2}
-        onClick={drawerControls.onOpen}
-        sx={{
-          _hover: {
-            bgColor: "#466a9e",
-            color: "white",
-          },
-        }}
-      >
-        Change Airport
-      </Button>
+      <Box position="relative" w="100%">
+        <Button
+          variant="solid"
+          size="md"
+          bgColor="#5686c2"
+          color="white"
+          w="100%"
+          borderRadius="none"
+          onClick={drawerControls.onOpen}
+          sx={{
+            _hover: {
+              bgColor: '#466a9e',
+              color: 'white'
+            }
+          }}>
+          Change Airport
+        </Button>
+        <Button
+          variant="solid"
+          size="md"
+          bgColor="#6b97cf"
+          color="white"
+          borderRadius="none"
+          position="absolute"
+          right="0"
+          top="0"
+          onClick={() => onRemove(airportData?.id)}
+          sx={{
+            _hover: {
+              bgColor: "#466a9e",
+              color: 'white'
+            }
+          }}>
+          ✕
+        </Button>
+      </Box>
       <p>{airportData.name}</p>
       {rangeValues[0] === rangeValues[1] ? (
         <Flex justify="center" w="90%" mb={2}>

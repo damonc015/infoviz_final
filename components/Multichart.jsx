@@ -1,23 +1,54 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import AirportSelection from './multicharts/AirportSelection'
 import AirlineSelection from './multicharts/AirlineSelection'
 import Selection from './multicharts/Selection'
-import { Grid, GridItem, Flex } from '@chakra-ui/react'
+import { Grid, GridItem, Flex, Button, Menu, MenuButton, MenuList, MenuItem } from '@chakra-ui/react'
+import { v4 as uuidv4 } from 'uuid';
 
 const Multichart = ({ type, data, drawerControls }) => {
   const [airports, setAirports] = useState([
-    { id: 1, name: 'JFK' },
-    { id: 2, name: 'LAX' },
-    { id: 3, name: 'ORD' },
-    { id: 4, name: 'ATL' }
+    { id: uuidv4(), name: 'JFK' },
+    { id: uuidv4(), name: 'LAX' },
+    { id: uuidv4(), name: 'ORD' },
+    { id: uuidv4(), name: 'ATL' }
   ])
 
-  const [airlines, setAirlines] = useState([
-    { id: 1, name: 'Delta' },
-    { id: 2, name: 'United' },
-    { id: 3, name: 'American' },
+  const [airlines, setAirlines] = useState(() => {
+    const initialAirlines = Object.keys(data || {})
+      .slice(0, 2)
+      .map(airlineName => ({
+        id: uuidv4(),
+        name: airlineName,
+        years: data[airlineName] || {}
+      }));
+    return initialAirlines;
+  });
 
-  ])
+  const allAirlines = useMemo(() => {
+    return Object.keys(data || {})
+      .filter(airlineName => !airlines.some(airline => airline.name === airlineName))
+      .map(airlineName => ({
+        id: uuidv4(),
+        name: airlineName,
+        years: data[airlineName] || {}
+      }));
+  }, [data, airlines]);
+
+  const handleRemoveAirport = (id) => {
+    setAirports(prevAirports => prevAirports.filter(airport => airport.id !== id));
+  };
+
+  const handleRemoveAirline = (id) => {
+    setAirlines(prevAirlines => prevAirlines.filter(airline => airline.id !== id));
+  };
+
+  const handleUpdateAirline = (currentId, newAirline) => {
+    setAirlines(prevAirlines =>
+      prevAirlines.map(airline =>
+        airline.id === currentId ? newAirline : airline
+      )
+    );
+  };
 
   return (
     <Flex flex="1" overflowY="auto">
@@ -37,9 +68,18 @@ const Multichart = ({ type, data, drawerControls }) => {
             alignItems="center"
             bg="#b0d4f8">
             {type === 'airports' ? (
-              <AirportSelection airportData={airports} drawerControls={drawerControls} />
+              <AirportSelection
+                airportData={item}
+                drawerControls={drawerControls}
+                onRemove={handleRemoveAirport}
+              />
             ) : (
-              <AirlineSelection airlineData={airlines} drawerControls={drawerControls} />
+              <AirlineSelection
+                airlineData={item}
+                onUpdate={handleUpdateAirline}
+                availableAirlines={allAirlines}
+                onRemove={handleRemoveAirline}
+              />
             )}
           </GridItem>
         ))}
@@ -51,7 +91,43 @@ const Multichart = ({ type, data, drawerControls }) => {
             justifyContent="flex-start"
             alignItems="center"
             bg="#b0d4f8">
-            <Selection type={type} drawerControls={drawerControls} />
+            {type === 'airports' ? (
+              <Selection type={type} drawerControls={drawerControls} />
+            ) : (
+              <Menu>
+                <MenuButton
+                  as={Button}
+                  variant="solid"
+                  size="md"
+                  bgColor="#5686c2"
+                  color="white"
+                  w="100%"
+                  borderRadius="none"
+                  sx={{
+                    _hover: {
+                      bgColor: "#466a9e",
+                      color: "white",
+                    },
+                  }}
+                >
+                  Add Airline +
+                </MenuButton>
+                <MenuList
+                  maxH="50vh"
+                  overflowY="auto"
+                  placement="right-start"
+                >
+                  {allAirlines.map((airline) => (
+                    <MenuItem
+                      key={airline.id}
+                      onClick={() => setAirlines(prev => [...prev, airline])}
+                    >
+                      {airline.name}
+                    </MenuItem>
+                  ))}
+                </MenuList>
+              </Menu>
+            )}
           </GridItem>
         )}
       </Grid>

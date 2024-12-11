@@ -7,32 +7,78 @@ import {
   RangeSliderThumb,
   Text,
   Box,
-  Flex
+  Flex,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem
 } from '@chakra-ui/react'
 
-const AirlineSelection = ({ airlineData, drawerControls }) => {
-  const [rangeValues, setRangeValues] = useState([2013, 2013])
+const AirlineSelection = ({ airlineData, onRemove, availableAirlines, onUpdate }) => {
+  const years = Object.keys(airlineData.years)
+    .filter(key => !isNaN(key))
+    .map(Number)
+  const minYear = Math.min(...years)
+  const maxYear = Math.max(...years)
+
+  const [rangeValues, setRangeValues] = useState([minYear, maxYear])
 
   return (
     <>
-      <Button
-        variant="solid"
-        size="md"
-        bgColor="#5686c2"
-        color="white"
-        w="100%"
-        borderRadius="none"
-        mt={2}
-        onClick={drawerControls.onOpen}
-        sx={{
-          _hover: {
-            bgColor: "#466a9e",
-            color: "white",
-          },
-        }}
-      >
-        Change Airline
-      </Button>
+      <Box position="relative" w="100%">
+        <Menu>
+          <MenuButton
+            as={Button}
+            variant="solid"
+            size="md"
+            bgColor="#5686c2"
+            color="white"
+            w="100%"
+            borderRadius="none"
+            sx={{
+              _hover: {
+                bgColor: "#466a9e",
+                color: "white",
+              },
+            }}
+          >
+            Change Airline
+          </MenuButton>
+          <MenuList
+            maxH="50vh"
+            overflowY="auto"
+            placement="right-start"
+          >
+            {availableAirlines.map((airline) => (
+              <MenuItem
+                key={airline.id}
+                onClick={() => onUpdate(airlineData.id, airline)}
+              >
+                {airline.name}
+              </MenuItem>
+            ))}
+          </MenuList>
+        </Menu>
+        <Button
+          variant="solid"
+          size="md"
+          bgColor="#6b97cf"
+          color="white"
+          borderRadius="none"
+          position="absolute"
+          right="0"
+          top="0"
+          onClick={() => onRemove(airlineData?.id)}
+          sx={{
+            _hover: {
+              bgColor: "#466a9e",
+              color: "white",
+            },
+          }}
+        >
+          ✕
+        </Button>
+      </Box>
       <p>{airlineData.name}</p>
       {rangeValues[0] === rangeValues[1] ? (
         <Flex justify="center" w="90%" mb={2}>
@@ -60,9 +106,9 @@ const AirlineSelection = ({ airlineData, drawerControls }) => {
         </Flex>
       )}
       <RangeSlider
-        defaultValue={[2013, 2013]}
-        min={2013}
-        max={2023}
+        defaultValue={[minYear, maxYear]}
+        min={minYear}
+        max={maxYear}
         step={1}
         size="lg"
         colorScheme="blue"
