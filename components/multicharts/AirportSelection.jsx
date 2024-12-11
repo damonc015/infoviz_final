@@ -10,8 +10,8 @@ import {
   Flex
 } from '@chakra-ui/react'
 
-const AirportSelection = ({ airportData }) => {
-  const [rangeValues, setRangeValues] = useState([2013, 2023])
+const AirportSelection = ({ airportData, drawerControls }) => {
+  const [rangeValues, setRangeValues] = useState([2013, 2013])
 
   return (
     <>
@@ -23,6 +23,7 @@ const AirportSelection = ({ airportData }) => {
         w="100%"
         borderRadius="none"
         mt={2}
+        onClick={drawerControls.onOpen}
         sx={{
           _hover: {
             bgColor: "#466a9e",
@@ -59,7 +60,7 @@ const AirportSelection = ({ airportData }) => {
         </Flex>
       )}
       <RangeSlider
-        defaultValue={[2013, 2023]}
+        defaultValue={[2013, 2013]}
         min={2013}
         max={2023}
         step={1}

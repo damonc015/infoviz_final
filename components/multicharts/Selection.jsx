@@ -2,7 +2,7 @@ import React from 'react'
 import { BsFillPlusCircleFill } from 'react-icons/bs'
 import { Button, Flex } from '@chakra-ui/react'
 
-const Selection = ({ airportData }) => {
+const Selection = ({ type, drawerControls }) => {
   return (
     <div className="selectionContainer" style={{
       position: 'sticky',
@@ -13,22 +13,23 @@ const Selection = ({ airportData }) => {
       justifyContent: 'center',
       alignItems: 'center'
     }}>
-        <Button
-          variant="outline"
-          size="lg"
-          bgColor="#5686c2"
-          color="white"
-          gap={2}
-          sx={{
-            _hover: {
-              bgColor: "#466a9e",
-              color: "white",
-            },
-          }}
-        >
-          <p>Add Airline</p>
-          <BsFillPlusCircleFill />
-        </Button>
+      <Button
+        variant="outline"
+        size="lg"
+        bgColor="#5686c2"
+        color="white"
+        gap={2}
+        onClick={drawerControls.onOpen}
+        sx={{
+          _hover: {
+            bgColor: "#466a9e",
+            color: "white",
+          },
+        }}
+      >
+        <p>Add {type === 'airports' ? 'Airport' : 'Airline'}</p>
+        <BsFillPlusCircleFill />
+      </Button>
     </div>
   )
 }
