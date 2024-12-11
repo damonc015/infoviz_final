@@ -24,15 +24,8 @@ const Container = () => {
   const { isOpen, onOpen, onClose } = useDisclosure()
   const [showChart, setShowChart] = useState('single')
   const [data, setData] = useState(null)
-  const [isMapMounted, setIsMapMounted] = useState(false)
 
   const drawerControls = { onOpen, onClose }
-
-  useEffect(() => {
-    if (isOpen && !isMapMounted) {
-      setIsMapMounted(true)
-    }
-  }, [isOpen])
 
   useEffect(() => {
     csv('/Airline_Delay_Cause.csv')
@@ -106,9 +99,7 @@ const Container = () => {
           <DrawerCloseButton size="lg" p={6} fontSize="20px" />
           <DrawerHeader>Select Airport</DrawerHeader>
           <DrawerBody>
-            <div style={{ display: isMapMounted ? 'block' : 'none' }}>
-              <Mapcontainer data={data} />
-            </div>
+            <Mapcontainer data={data} />
           </DrawerBody>
         </DrawerContent>
       </Drawer>

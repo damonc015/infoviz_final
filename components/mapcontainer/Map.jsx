@@ -1,8 +1,8 @@
 // components/mapcontainer/Map.jsx
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState, memo } from 'react'
 import * as d3 from 'd3'
 
-const Map = () => {
+const Map = memo(() => {
   const svgRef = useRef(null)
   const [mapInitialized, setMapInitialized] = useState(false)
 
@@ -123,6 +123,8 @@ const Map = () => {
       <svg ref={svgRef}></svg>
     </div>
   )
-}
+})
+
+Map.displayName = 'Map'
 
 export default Map
