@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import {
   Button,
   RangeSlider,
@@ -7,11 +7,71 @@ import {
   RangeSliderThumb,
   Text,
   Box,
-  Flex
+  Flex,
+  VStack
 } from '@chakra-ui/react'
+import Pie from '../chartcontainer/Pie'
+import Line from '../chartcontainer/Line'
+import Polar from '../chartcontainer/Polar'
+import SidewaysBar from '../chartcontainer/SidewaysBar'
 
-const AirportSelection = ({ airportData, drawerControls, onRemove, index }) => {
-  const [rangeValues, setRangeValues] = useState([2013, 2013])
+const AirportSelection = ({ data, airportData, drawerControls, onRemove, index }) => {
+  // Get the full airport data for other charts
+  const airportFullData = useMemo(() => {
+    if (!data || !airportData || !data[airportData]) return null
+    return Object.fromEntries(Object.entries(data[airportData]).slice(0, -2))
+  }, [data, airportData])
+
+  // Get min and max years
+  const [minYear, maxYear] = useMemo(() => {
+    if (!airportFullData) return [2013, 2013]
+    const years = Object.keys(airportFullData).map(Number)
+    return [Math.min(...years), Math.max(...years)]
+  }, [airportFullData])
+
+  // Initialize range values with min year
+  const [rangeValues, setRangeValues] = useState([minYear, minYear])
+
+  // Filter data for the selected airport
+  const filteredData = useMemo(() => {
+    if (!data || !airportData || !data[airportData]) return null
+
+    // initial count
+    let totalDelays = {
+      'Carrier Delay': 0,
+      'Weather Delay': 0,
+      'NAS Delay': 0,
+      'Security Delay': 0,
+      'Late Aircraft Delay': 0
+    }
+
+    const airportYearData = Object.fromEntries(Object.entries(data[airportData]).slice(0, -2))
+
+    // Loop through selected years
+    for (let year = rangeValues[0]; year <= rangeValues[1]; year++) {
+      if (airportYearData[year]) {
+        // Loop through all months
+        Object.values(airportYearData[year]).forEach((monthData) => {
+          // Sum up delays from all carriers in each month
+          Object.values(monthData).forEach((carrierData) => {
+            totalDelays['Carrier Delay'] += carrierData.carrier_delay || 0
+            totalDelays['Weather Delay'] += carrierData.weather_delay || 0
+            totalDelays['NAS Delay'] += carrierData.nas_delay || 0
+            totalDelays['Security Delay'] += carrierData.security_delay || 0
+            totalDelays['Late Aircraft Delay'] += carrierData.late_aircraft_delay || 0
+          })
+        })
+      }
+    }
+
+    // Convert to array format for D3
+    return Object.entries(totalDelays)
+      .map(([name, value]) => ({ name, value }))
+      .filter((item) => item.value > 0)
+  }, [data, airportData, rangeValues])
+
+  // Charts - Delay Types
+  const delayTypes = ['carrier', 'weather', 'nas', 'security', 'late_aircraft']
 
   const handleAirportChange = () => {
     drawerControls.setSelectedAction({ type: 'change', index })
@@ -104,78 +164,47 @@ const AirportSelection = ({ airportData, drawerControls, onRemove, index }) => {
           <RangeSliderThumb index={1} />
         </RangeSlider>
 
-        <Text fontSize="sm" mt={2}>
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt
-          ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation
-          ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in
-          reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur
-          sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id
-          est laborum.
-        </Text>
-        <Text fontSize="sm" mt={2}>
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt
-          ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation
-          ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in
-          reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur
-          sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id
-          est laborum.
-        </Text>
-        <Text fontSize="sm" mt={2}>
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt
-          ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation
-          ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in
-          reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur
-          sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id
-          est laborum.
-        </Text>
-        <Text fontSize="sm" mt={2}>
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt
-          ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation
-          ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in
-          reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur
-          sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id
-          est laborum.
-        </Text>
-        <Text fontSize="sm" mt={2}>
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt
-          ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation
-          ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in
-          reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur
-          sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id
-          est laborum.
-        </Text>
-        <Text fontSize="sm" mt={2}>
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt
-          ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation
-          ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in
-          reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur
-          sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id
-          est laborum.
-        </Text>
-        <Text fontSize="sm" mt={2}>
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt
-          ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation
-          ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in
-          reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur
-          sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id
-          est laborum.
-        </Text>
-        <Text fontSize="sm" mt={2}>
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt
-          ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation
-          ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in
-          reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur
-          sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id
-          est laborum.
-        </Text>
-        <Text fontSize="sm" mt={2}>
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt
-          ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation
-          ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in
-          reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur
-          sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id
-          est laborum.
-        </Text>
+        {/* Charts */}
+        <VStack spacing={4} w="100%" mt={4}>
+          {/* Pie Chart */}
+          <Box w="100%" h="auto">
+            <Pie data={filteredData} />
+          </Box>
+
+          {/* Line Charts */}
+          {delayTypes.map((delayType) => (
+            <Box key={delayType} w="100%" h="200px">
+              <Line
+                data={airportFullData}
+                delayType={delayType}
+                rangeValues={rangeValues}
+              />
+            </Box>
+          ))}
+
+          {/* Polar Charts */}
+          <Box w="100%">
+            <VStack spacing={4}>
+              {delayTypes.map((delayType) => (
+                <Box key={delayType} w="100%" h="300px">
+                  <Polar
+                    data={airportFullData}
+                    delayType={delayType}
+                    rangeValues={rangeValues}
+                  />
+                </Box>
+              ))}
+            </VStack>
+          </Box>
+
+          {/* Sideways Bar Chart */}
+          <Box w="100%" h="600px">
+            <SidewaysBar
+              data={airportFullData}
+              rangeValues={rangeValues}
+            />
+          </Box>
+        </VStack>
       </Flex>
     </>
   )

@@ -1,6 +1,7 @@
 'use client'
 import React, { useEffect, useRef } from 'react'
 import * as d3 from 'd3'
+import { Spinner, Center } from '@chakra-ui/react'
 
 const Pie = ({ data }) => {
   const containerRef = useRef(null)
@@ -20,29 +21,27 @@ const Pie = ({ data }) => {
     const renderChart = () => {
       const container = containerRef.current
       const containerWidth = container.clientWidth
-      // Set a maximum height for the chart
-      const containerHeight = Math.min(containerWidth * 0.8, 500) // Limit maximum height
+      const containerHeight = Math.min(containerWidth * 0.8, 500)
 
-      // Set up dimensions
+      // pie dimensions
       const margin = { top: 20, right: 20, bottom: 100, left: 20 }
       const width = containerWidth - margin.left - margin.right
       const height = containerHeight - margin.top - margin.bottom
       const radius = Math.min(width, height) / 2
 
-      // Create SVG
       const svg = d3.select(svgRef.current)
         .attr('width', width + margin.left + margin.right)
         .attr('height', height + margin.top + margin.bottom + (data.length * 25))
         .append('g')
         .attr('transform', `translate(${width/2 + margin.left},${height/2 + margin.top})`)
 
-      // Set up colors
+      // color scale
       const color = d3
         .scaleOrdinal()
         .domain(data.map((d) => d.name))
         .range(d3.schemeSet2)
 
-      // Create pie chart
+      // make pie chart
       const pie = d3
         .pie()
         .value((d) => d.value)
@@ -51,7 +50,7 @@ const Pie = ({ data }) => {
       const arc = d3
         .arc()
         .innerRadius(0)
-        .outerRadius(radius * 0.8) // Slightly smaller to make room for legend
+        .outerRadius(radius * 0.8)
 
       // Add tooltips
       const tooltip = d3
@@ -65,7 +64,7 @@ const Pie = ({ data }) => {
         .style('visibility', 'hidden')
         .style('z-index', '10')
 
-      // Create pie chart segments
+      // pie chart pieces
       const paths = svg
         .selectAll('path')
         .data(pie(data))
@@ -109,19 +108,28 @@ const Pie = ({ data }) => {
         .style('font-size', '12px')
         .style('fill', 'white')
 
-      // Add legend with white background
+      // legend
       const legendGroup = svg.append('g')
-        .attr('transform', `translate(${-width/3},${height/2 + 10})`)
+        .attr('transform', `translate(${-width/2 + 20},${height/2 + 50})`)
 
-      // Add background for legend with darker shade and more rounded corners
+      // Updated background rectangle dimensions and position
       const legendBackground = legendGroup.append('rect')
         .attr('x', -10)
-        .attr('y', -10)
-        .attr('width', width * 0.8)
-        .attr('height', (data.length * 25) + 20)
-        .attr('fill', '#f5f5f5') // Light gray background
-        .attr('rx', 10) // More rounded corners
+        .attr('y', -35)
+        .attr('width', width * 0.9)
+        .attr('height', (data.length * 25) + 40)
+        .attr('fill', '#e4edf6')
+        .attr('rx', 10)
         .attr('ry', 10)
+
+      // Adjusted total delays text position
+      const totalDelays = d3.sum(data, d => d.value)
+      legendGroup.append('text')
+        .attr('x', 10)
+        .attr('y', -10)
+        .text(`Total Delays: ${totalDelays.toLocaleString()} minutes`)
+        .style('font-size', '14px')
+        .style('font-weight', 'bold')
 
       const legendSpacing = 25;
       const legend = legendGroup.selectAll('.legend')
@@ -129,7 +137,7 @@ const Pie = ({ data }) => {
         .enter()
         .append('g')
         .attr('class', 'legend')
-        .attr('transform', (d, i) => `translate(${(width * 0.8) / 4}, ${i * legendSpacing})`) // Center items horizontally
+        .attr('transform', (d, i) => `translate(10, ${i * legendSpacing})`)
 
       legend.append('rect')
         .attr('width', 15)
@@ -158,15 +166,30 @@ const Pie = ({ data }) => {
     }
   }, [data])
 
+  if (!data || data.length === 0) {
+    return (
+      <Center h="100%" minH="400px">
+        <Spinner
+          thickness='4px'
+          speed='0.65s'
+          emptyColor='gray.200'
+          color='blue.500'
+          size='xl'
+        />
+      </Center>
+    )
+  }
+
   return (
     <div ref={containerRef} style={{
       width: '100%',
       height: '100%',
       minHeight: '400px',
-      maxHeight: '500px',
+      maxHeight: '650px',
       display: 'flex',
       justifyContent: 'center',
-      alignItems: 'center'
+      alignItems: 'center',
+      marginBottom: 'clamp(10px, 3vw, 30px)'
     }}>
       <svg ref={svgRef} style={{ width: '100%', height: '100%' }}></svg>
     </div>

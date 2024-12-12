@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import {
   Button,
   RangeSlider,
@@ -11,17 +11,55 @@ import {
   Menu,
   MenuButton,
   MenuList,
-  MenuItem
+  MenuItem,
+  VStack
 } from '@chakra-ui/react'
+import Pie from '../chartcontainer/Pie'
 
-const AirlineSelection = ({ airlineData, onRemove, availableAirlines, onUpdate }) => {
-  const years = Object.keys(airlineData.years)
-    .filter(key => !isNaN(key))
-    .map(Number)
-  const minYear = Math.min(...years)
-  const maxYear = Math.max(...years)
+const AirlineSelection = ({ data, airlineData, onRemove, availableAirlines, onUpdate }) => {
+  // Filter data for the selected airline
+  const filteredData = useMemo(() => {
+    if (!data || !airlineData?.name) {
+      console.log('Missing required data:', { data, airlineDataName: airlineData?.name });
+      return null;
+    }
 
-  const [rangeValues, setRangeValues] = useState([minYear, maxYear])
+    // Directly access the airline data using the name as the key
+    const airlineEntry = data[airlineData.name];
+
+    if (!airlineEntry) {
+      console.log('No matching airline found for:', airlineData.name);
+      return null;
+    }
+
+    return airlineEntry || null;
+  }, [data, airlineData]);
+
+  // Calculate min and max years using filteredData
+  const [minYear, maxYear] = useMemo(() => {
+    if (!filteredData) {
+      console.log('No filtered data available, using default years [2013, 2013]');
+      return [2013, 2013];
+    }
+
+    const years = Object.keys(filteredData)
+      .filter(key => !isNaN(key))
+      .map(Number);
+
+    console.log('Available years:', years);
+    console.log('Min year:', Math.min(...years));
+    console.log('Max year:', Math.max(...years));
+
+    return [Math.min(...years), Math.max(...years)];
+  }, [filteredData]);
+
+  // Initialize range values with the full range
+  const [rangeValues, setRangeValues] = useState([2013, 2013])
+
+  // Update range values when min/max years change
+  useEffect(() => {
+    setRangeValues([minYear, maxYear])
+  }, [minYear, maxYear])
 
   return (
     <>
@@ -37,22 +75,15 @@ const AirlineSelection = ({ airlineData, onRemove, availableAirlines, onUpdate }
             borderRadius="none"
             sx={{
               _hover: {
-                bgColor: "#466a9e",
-                color: "white",
-              },
-            }}
-          >
+                bgColor: '#466a9e',
+                color: 'white'
+              }
+            }}>
             Change Airline
           </MenuButton>
-          <MenuList
-            maxH="50vh"
-            overflowY="auto"
-          >
+          <MenuList maxH="50vh" overflowY="auto">
             {availableAirlines.map((airline) => (
-              <MenuItem
-                key={airline.id}
-                onClick={() => onUpdate(airlineData.id, airline)}
-              >
+              <MenuItem key={airline.id} onClick={() => onUpdate(airlineData.id, airline)}>
                 {airline.name}
               </MenuItem>
             ))}
@@ -70,15 +101,19 @@ const AirlineSelection = ({ airlineData, onRemove, availableAirlines, onUpdate }
           onClick={() => onRemove(airlineData?.id)}
           sx={{
             _hover: {
-              bgColor: "#466a9e",
-              color: "white",
-            },
-          }}
-        >
+              bgColor: '#466a9e',
+              color: 'white'
+            }
+          }}>
           ✕
         </Button>
       </Box>
-      <Text my={2} fontWeight="bold">{airlineData.name}</Text>
+      <Text my={2} fontWeight="bold">
+        {airlineData.name}
+      </Text>
+      {filteredData?.fullData && (
+        <Pie data={filteredData.fullData} />
+      )}
       {rangeValues[0] === rangeValues[1] ? (
         <Flex justify="center" w="90%" mb={2}>
           <Box textAlign="center">
@@ -105,14 +140,17 @@ const AirlineSelection = ({ airlineData, onRemove, availableAirlines, onUpdate }
         </Flex>
       )}
       <RangeSlider
-        defaultValue={[minYear, maxYear]}
+        aria-label={['min', 'max']}
+        value={rangeValues}
         min={minYear}
         max={maxYear}
         step={1}
         size="lg"
         colorScheme="blue"
         onChange={(val) => setRangeValues(val)}
-        w="90%">
+        w="90%"
+        isReadOnly={false}
+      >
         <RangeSliderTrack bg="#8fc0f1">
           <RangeSliderFilledTrack />
         </RangeSliderTrack>

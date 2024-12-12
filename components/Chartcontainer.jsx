@@ -1,6 +1,9 @@
 'use client'
-import React, { useState, useMemo } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import Pie from './chartcontainer/Pie'
+import LineChart from './chartcontainer/Line'
+import PolarChart from './chartcontainer/Polar'
+import BarChart from './chartcontainer/Bar'
 import {
   Button,
   Box,
@@ -15,20 +18,28 @@ import {
 } from '@chakra-ui/react'
 
 const Chartcontainer = ({ data, mainAirport, drawerControls }) => {
-  const years =
-    data && mainAirport && data[mainAirport]
-      ? Object.keys(data[mainAirport])
-          .filter((key) => !isNaN(key))
-          .map(Number)
-      : [2013]
-  const minYear = years.length > 0 ? Math.min(...years) : 2013
-  const maxYear = years.length > 0 ? Math.max(...years) : 2013
+  // Get full airport data
+  const airportFullData = useMemo(() => {
+    if (!data || !mainAirport || !data[mainAirport]) return null
+    const allData = data[mainAirport]
+    const result = Object.fromEntries(Object.entries(allData).slice(0, -2))
+    console.log('Airport Full Data:', result)
+    return result
+  }, [data, mainAirport])
+
+  // Get min and max years from airportFullData
+  const [minYear, maxYear] = useMemo(() => {
+    if (!airportFullData) return [2013, 2013]
+    const years = Object.keys(airportFullData).map(Number)
+    return [Math.min(...years), Math.max(...years)]
+  }, [airportFullData])
 
   const [rangeValues, setRangeValues] = useState([minYear, minYear])
 
   const filteredData = useMemo(() => {
-    if (!data || !mainAirport || !data[mainAirport]) return null
+    if (!airportFullData) return null
 
+    // initial count
     let totalDelays = {
       'Carrier Delay': 0,
       'Weather Delay': 0,
@@ -39,9 +50,9 @@ const Chartcontainer = ({ data, mainAirport, drawerControls }) => {
 
     // Loop through selected years
     for (let year = rangeValues[0]; year <= rangeValues[1]; year++) {
-      if (data[mainAirport][year]) {
+      if (airportFullData[year]) {
         // Loop through all months
-        Object.values(data[mainAirport][year]).forEach((monthData) => {
+        Object.values(airportFullData[year]).forEach((monthData) => {
           // Sum up delays from all carriers in each month
           Object.values(monthData).forEach((carrierData) => {
             totalDelays['Carrier Delay'] += carrierData.carrier_delay || 0
@@ -57,8 +68,8 @@ const Chartcontainer = ({ data, mainAirport, drawerControls }) => {
     // Convert to array format for D3
     return Object.entries(totalDelays)
       .map(([name, value]) => ({ name, value }))
-      .filter((item) => item.value > 0) // Only include delays > 0
-  }, [data, mainAirport, rangeValues])
+      .filter((item) => item.value > 0)
+  }, [airportFullData, rangeValues])
 
   const handleAirportChange = () => {
     drawerControls.setSelectedAction({ type: 'changeMain', index: 0 })
@@ -67,15 +78,15 @@ const Chartcontainer = ({ data, mainAirport, drawerControls }) => {
 
   return (
     <Grid
-      templateColumns="40% 60%"
-      templateRows="auto auto"
+      templateColumns="40% 58%"
+      templateRows="auto auto auto"
       gap={4}
       w="100%"
+      h="auto"
       p={4}
       bgColor="#b0d4f8"
-      flex={1}
-      overflow="auto">
-      <GridItem colSpan={1}>
+      flex={1}>
+      <GridItem rowSpan={1}>
         <Flex direction="column" gap={4} justifyContent="flex-start" alignItems="center">
           <Box position="relative" w="100%" maxW="300px">
             <Button
@@ -143,7 +154,7 @@ const Chartcontainer = ({ data, mainAirport, drawerControls }) => {
           </RangeSlider>
 
           <Text fontSize="xl" fontWeight="bold" mt={4}>
-            Delay Types
+            Delay Types (Total Min.)
           </Text>
           <Box w="100%" flex={1} minH="200px">
             <Pie data={filteredData} />
@@ -151,9 +162,58 @@ const Chartcontainer = ({ data, mainAirport, drawerControls }) => {
         </Flex>
       </GridItem>
 
-      <GridItem colSpan={1}>{/* Right side content */}</GridItem>
+      <GridItem>
+        <Grid templateColumns="1fr" gap={4}>
+          {['carrier', 'weather', 'nas', 'security', 'late_aircraft'].map((delayType) => (
+            <Box key={delayType}>
+              <LineChart data={airportFullData} delayType={delayType} rangeValues={rangeValues} />
+            </Box>
+          ))}
+        </Grid>
+      </GridItem>
 
-      <GridItem colSpan={2}>{/* Bottom content */}</GridItem>
+      <GridItem colSpan={2}>
+        <Text fontSize="xl" fontWeight="bold" mb={2} textAlign="center" color="#000">
+          Delay Incidents by Season
+        </Text>
+
+        <Flex justify="center" mb={4}>
+          {['Winter', 'Spring', 'Summer', 'Fall'].map((season) => (
+            <Flex key={season} align="center" mx={4}>
+              <Box
+                w="12px"
+                h="12px"
+                borderRadius="50%"
+                mr={2}
+                bg={
+                  season === 'Winter'
+                    ? 'rgba(54, 162, 235, 0.5)'
+                    : season === 'Spring'
+                    ? 'rgba(75, 192, 192, 0.5)'
+                    : season === 'Summer'
+                    ? 'rgba(255, 99, 132, 0.5)'
+                    : 'rgba(255, 159, 64, 0.5)'
+                }
+              />
+              <Text fontSize="sm">{season}</Text>
+            </Flex>
+          ))}
+        </Flex>
+
+        <Grid templateColumns="repeat(5, 1fr)" gap={2} h="250px">
+          {['carrier', 'weather', 'nas', 'security', 'late_aircraft'].map((delayType) => (
+            <Box key={delayType} h="100%">
+              <PolarChart data={airportFullData} delayType={delayType} rangeValues={rangeValues} />
+            </Box>
+          ))}
+        </Grid>
+      </GridItem>
+
+      <GridItem colSpan={2} mt={12}>
+        <Box h="auto">
+          <BarChart data={airportFullData} rangeValues={rangeValues} />
+        </Box>
+      </GridItem>
     </Grid>
   )
 }

@@ -49,7 +49,7 @@ const Multichart = ({
   }
 
   return (
-    <Flex flex="1" overflowY="auto">
+    <Flex flex="1">
       <Grid
         templateColumns={`repeat(${
           type === 'airports'
@@ -61,13 +61,13 @@ const Multichart = ({
             : 4
         }, 1fr)`}
         gap={0.5}
-        w="100%">
-
+        w="100%"
+        h="auto">
         {/* GRID ITEMS - AIRPORTS OR AIRLINES */}
         {(type === 'airports' ? airports : airlines).slice(0, 4).map((item, index) => (
           <GridItem
             key={`${item}-${index}`}
-            h="100%"
+            h="auto"
             display="flex"
             flexDir="column"
             justifyContent="flex-start"
@@ -75,6 +75,7 @@ const Multichart = ({
             bg="#b0d4f8">
             {type === 'airports' ? (
               <AirportSelection
+                data={data}
                 airportData={item}
                 drawerControls={drawerControls}
                 onRemove={handleRemoveAirport}
@@ -82,6 +83,7 @@ const Multichart = ({
               />
             ) : (
               <AirlineSelection
+                data={data}
                 airlineData={item}
                 onUpdate={handleUpdateAirline}
                 availableAirlines={allAirlines}
@@ -92,7 +94,7 @@ const Multichart = ({
         ))}
         {(type === 'airports' ? airports.length : airlines.length) < 4 && (
           <GridItem
-            h="100%"
+            h="auto"
             display="flex"
             flexDir="column"
             justifyContent="flex-start"

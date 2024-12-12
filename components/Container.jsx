@@ -159,7 +159,6 @@ const Container = () => {
   return (
     <Flex direction="column" h="100vh">
       <Box as="nav" bg="blue.500" color="white" p={4}>
-
         {/* Nav */}
         <Tabs
           variant="enclosed"
