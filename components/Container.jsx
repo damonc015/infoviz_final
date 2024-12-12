@@ -146,8 +146,8 @@ const Container = () => {
           }
           return acc
         }, {})
-        console.log(aggregatedAirportData)
-        console.log(aggregatedAirlinesData)
+        // console.log(aggregatedAirportData)
+        // console.log(aggregatedAirlinesData)
         setAirportData(aggregatedAirportData)
         setAirlinesData(aggregatedAirlinesData)
       })

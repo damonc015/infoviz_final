@@ -13,15 +13,12 @@ const AirlineBar = ({ data, rangeValues }) => {
     const width = container.clientWidth
     const height = container.clientHeight
 
-    // Clear previous chart
     d3.select(svgRef.current).selectAll('*').remove()
 
-    // Process data to get totals within range
     let totalFlights = 0
     let totalDelays = 0
     let totalDelayMinutes = 0
 
-    // Sum up values for selected years
     Object.entries(data)
       .filter(([year]) => year >= rangeValues[0] && year <= rangeValues[1])
       .forEach(([_, months]) => {
@@ -34,19 +31,15 @@ const AirlineBar = ({ data, rangeValues }) => {
         })
       })
 
-    // Calculate average delay per flight
     const avgDelayPerFlight = totalDelayMinutes / totalFlights || 0
 
-    const chartData = [
-      { name: 'Avg Delay (mins)', value: avgDelayPerFlight, color: '#2ca02c' }
-    ]
+    const chartData = [{ name: 'Avg Delay (mins)', value: avgDelayPerFlight, color: '#2ca02c' }]
 
-    // Setup dimensions
+    // dimensions
     const margin = { top: 60, right: 30, bottom: 60, left: 80 }
     const innerWidth = width - margin.left - margin.right
     const innerHeight = height - margin.top - margin.bottom
 
-    // Create SVG
     const svg = d3
       .select(svgRef.current)
       .attr('width', width)
@@ -54,21 +47,21 @@ const AirlineBar = ({ data, rangeValues }) => {
       .append('g')
       .attr('transform', `translate(${margin.left},${margin.top})`)
 
-    // Create scales
+    // axes scales
     const xScale = d3
       .scaleBand()
-      .domain(chartData.map(d => d.name))
+      .domain(chartData.map((d) => d.name))
       .range([0, innerWidth])
       .padding(0.3)
 
     const yScale = d3
       .scaleLinear()
-      .domain([0, d3.max(chartData, d => d.value)])
+      .domain([0, d3.max(chartData, (d) => d.value)])
       .range([innerHeight, 0])
       .nice()
 
+    // tooltip
     try {
-      // Create tooltip
       const tooltip = d3
         .select(containerRef.current)
         .append('div')
@@ -82,19 +75,19 @@ const AirlineBar = ({ data, rangeValues }) => {
         .style('font-size', '12px')
         .style('pointer-events', 'none')
 
-      // Add bars
+      // bars
       svg
         .selectAll('.bar')
         .data(chartData)
         .join('rect')
         .attr('class', 'bar')
-        .attr('x', d => xScale(d.name))
-        .attr('y', d => yScale(d.value))
+        .attr('x', (d) => xScale(d.name))
+        .attr('y', (d) => yScale(d.value))
         .attr('width', xScale.bandwidth())
-        .attr('height', d => innerHeight - yScale(d.value))
-        .attr('fill', d => d.color)
+        .attr('height', (d) => innerHeight - yScale(d.value))
+        .attr('fill', (d) => d.color)
         .style('cursor', 'pointer')
-        .on('mouseover', function(event, d) {
+        .on('mouseover', function (event, d) {
           const rect = containerRef.current.getBoundingClientRect()
           const x = event.clientX - rect.left
           const y = event.clientY - rect.top
@@ -103,10 +96,11 @@ const AirlineBar = ({ data, rangeValues }) => {
             .style('visibility', 'visible')
             .html(
               `<strong>${d.name}</strong><br>` +
-              `Value: ${d.name === 'Avg Delay (mins)'
-                ? Math.round(d.value * 10) / 10
-                : Math.round(d.value).toLocaleString()
-              }${d.name === 'Avg Delay (mins)' ? ' minutes' : ''}`
+                `Value: ${
+                  d.name === 'Avg Delay (mins)'
+                    ? Math.round(d.value * 10) / 10
+                    : Math.round(d.value).toLocaleString()
+                }${d.name === 'Avg Delay (mins)' ? ' minutes' : ''}`
             )
             .style('left', `${x + 10}px`)
             .style('top', `${y - 10}px`)
@@ -115,7 +109,7 @@ const AirlineBar = ({ data, rangeValues }) => {
           tooltip.style('visibility', 'hidden')
         })
 
-      // Add axes
+      // axes
       svg
         .append('g')
         .attr('transform', `translate(0,${innerHeight})`)
@@ -124,13 +118,9 @@ const AirlineBar = ({ data, rangeValues }) => {
         .style('text-anchor', 'middle')
         .style('font-size', '12px')
 
-      svg
-        .append('g')
-        .call(d3.axisLeft(yScale))
-        .selectAll('text')
-        .style('font-size', '12px')
+      svg.append('g').call(d3.axisLeft(yScale)).selectAll('text').style('font-size', '12px')
 
-      // Add title
+      // title
       svg
         .append('text')
         .attr('x', innerWidth / 2)
@@ -148,7 +138,7 @@ const AirlineBar = ({ data, rangeValues }) => {
     }
   }
 
-  // Add ResizeObserver
+  // resize observer bc griditems messing up barchart
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
@@ -164,9 +154,8 @@ const AirlineBar = ({ data, rangeValues }) => {
     return () => {
       resizeObserver.disconnect()
     }
-  }, []) // Empty dependency array since we only want to set up the observer once
+  }, [])
 
-  // Keep existing useEffect for chart rendering
   useEffect(() => {
     if (!data || !rangeValues) return
 
@@ -182,6 +171,7 @@ const AirlineBar = ({ data, rangeValues }) => {
     }
   }, [data, rangeValues])
 
+  //   loader
   if (!data || !rangeValues) {
     return (
       <Box

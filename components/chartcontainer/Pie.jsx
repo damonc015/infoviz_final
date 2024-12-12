@@ -87,7 +87,7 @@ const Pie = ({ data }) => {
           d3.select(this).style('opacity', 1)
         })
 
-      // Add percentage labels
+      // percentage labels
       const labelArc = d3
         .arc()
         .innerRadius(radius * 0.5)
@@ -112,7 +112,7 @@ const Pie = ({ data }) => {
       const legendGroup = svg.append('g')
         .attr('transform', `translate(${-width/2 + 20},${height/2 + 50})`)
 
-      // Updated background rectangle dimensions and position
+      // background color
       const legendBackground = legendGroup.append('rect')
         .attr('x', -10)
         .attr('y', -35)
@@ -122,7 +122,7 @@ const Pie = ({ data }) => {
         .attr('rx', 10)
         .attr('ry', 10)
 
-      // Adjusted total delays text position
+      // title
       const totalDelays = d3.sum(data, d => d.value)
       legendGroup.append('text')
         .attr('x', 10)
@@ -152,13 +152,10 @@ const Pie = ({ data }) => {
         .style('font-weight', 'bold')
     }
 
-    // Initial render
     renderChart()
 
-    // Add resize listener
     window.addEventListener('resize', handleResize)
 
-    // Cleanup function
     return () => {
       window.removeEventListener('resize', handleResize)
       d3.select('body').selectAll('.tooltip').remove()

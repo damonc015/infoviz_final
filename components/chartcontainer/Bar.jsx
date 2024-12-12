@@ -14,14 +14,11 @@ const BarChart = ({ data, rangeValues }) => {
       const width = container.clientWidth
       const height = container.clientHeight
 
-      // Clear previous chart
       d3.select(svgRef.current).selectAll('*').remove()
 
-      // Process data to get airline totals by delay type and flights
-      const delayTypes = ['carrier_ct', 'weather_ct', 'nas_ct', 'security_ct', 'late_aircraft_ct']
       const airlineTotals = {}
 
-      // Process data for years within range
+      //   data for years in range
       Object.entries(data)
         .filter(([year]) => year >= rangeValues[0] && year <= rangeValues[1])
         .forEach(([_, months]) => {
@@ -50,12 +47,12 @@ const BarChart = ({ data, rangeValues }) => {
 
       const chartData = Object.values(airlineTotals)
 
-      // Setup dimensions
+      // chart dimensions
       const margin = { top: 40, right: 30, bottom: 180, left: 120 }
       const innerWidth = width - margin.left - margin.right
       const innerHeight = height - margin.top - margin.bottom
 
-      // Stack the data
+      // bar sections
       const delayCategories = [
         'Carrier Delay',
         'Weather Delay',
@@ -66,7 +63,7 @@ const BarChart = ({ data, rangeValues }) => {
       const stack = d3.stack().keys(delayCategories)
       const stackedData = stack(chartData)
 
-      // Create scales with grouped bars
+      // scales with grouped bars
       const xScale = d3
         .scaleBand()
         .domain(chartData.map((d) => d.airline))
@@ -74,24 +71,23 @@ const BarChart = ({ data, rangeValues }) => {
         .padding(0.4)
         .paddingOuter(0.2)
 
-      // Create inner scale for grouped bars
+      // inner scale for grouped bars
       const xInnerScale = d3
         .scaleBand()
         .domain(['flights', 'delays'])
         .range([0, xScale.bandwidth()])
         .padding(0.2)
 
-      // Find the maximum value between delays and flights
+      // max value between delays and flights
       const maxDelays = d3.max(stackedData[stackedData.length - 1], (d) => d[1])
       const maxFlights = d3.max(chartData, (d) => d['Arrival Flights'])
       const maxValue = Math.max(maxDelays, maxFlights)
 
-      // Create separate y scales for flights and delays using the same domain
+      // more scales but for y axis
       const yScaleDelays = d3.scaleLinear().domain([0, maxValue]).range([innerHeight, 0]).nice()
 
       const yScaleFlights = d3.scaleLinear().domain([0, maxValue]).range([innerHeight, 0]).nice()
 
-      // Create SVG
       const svg = d3
         .select(svgRef.current)
         .attr('width', width)
@@ -99,11 +95,11 @@ const BarChart = ({ data, rangeValues }) => {
         .append('g')
         .attr('transform', `translate(${margin.left},${margin.top})`)
 
-      // Color scale matching other charts
+      // pie chart colors
       const color = d3.scaleOrdinal().domain(delayCategories).range(d3.schemeSet2)
 
+      // tooltip
       try {
-        // Create tooltip
         const tooltip = d3
           .select(containerRef.current)
           .append('div')
@@ -117,7 +113,7 @@ const BarChart = ({ data, rangeValues }) => {
           .style('font-size', '12px')
           .style('pointer-events', 'none')
 
-        // Add arrival flights bars
+        // arrival flights bars
         svg
           .selectAll('.flight-bars')
           .data(chartData)
@@ -147,7 +143,7 @@ const BarChart = ({ data, rangeValues }) => {
             tooltip.style('visibility', 'hidden')
           })
 
-        // Update delay bars position
+        // delay bars position
         svg
           .selectAll('g.delay-type')
           .data(stackedData)
@@ -190,7 +186,7 @@ const BarChart = ({ data, rangeValues }) => {
             tooltip.style('visibility', 'hidden')
           })
 
-        // Add axes with larger font size
+        // axes
         svg
           .append('g')
           .attr('transform', `translate(0,${innerHeight})`)
@@ -202,7 +198,6 @@ const BarChart = ({ data, rangeValues }) => {
           .attr('dy', '.15em')
           .attr('transform', 'rotate(-45)')
 
-        // Add both y-axes
         svg.append('g').call(d3.axisLeft(yScaleDelays)).selectAll('text').style('font-size', '12px')
 
         svg
@@ -212,7 +207,7 @@ const BarChart = ({ data, rangeValues }) => {
           .selectAll('text')
           .style('font-size', '12px')
 
-        // Add y-axis labels
+        // y-axis labels
         svg
           .append('text')
           .attr('transform', 'rotate(-90)')
@@ -231,7 +226,7 @@ const BarChart = ({ data, rangeValues }) => {
           .style('font-size', '12px')
           .text('Number of Arrivals')
 
-        // Add legend with arrival flights
+        // legend
         const legendData = ['Arrival Flights', ...delayCategories]
         const legendColors = ['#3c6091', ...d3.schemeSet2]
 
@@ -259,7 +254,7 @@ const BarChart = ({ data, rangeValues }) => {
           .style('font-size', '12px')
           .text((d) => d)
 
-        // Update title
+        // title
         svg
           .append('text')
           .attr('x', innerWidth / 2)
@@ -277,21 +272,19 @@ const BarChart = ({ data, rangeValues }) => {
       }
     }
 
-    // Initial render
     renderChart()
 
-    // Add resize listener
     const handleResize = () => {
       renderChart()
     }
     window.addEventListener('resize', handleResize)
 
-    // Cleanup
     return () => {
       window.removeEventListener('resize', handleResize)
     }
   }, [data, rangeValues])
 
+    //   loader
   if (!data || !rangeValues || !Array.isArray(rangeValues)) {
     return (
       <Box

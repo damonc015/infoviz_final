@@ -23,7 +23,7 @@ const Chartcontainer = ({ data, mainAirport, drawerControls }) => {
     if (!data || !mainAirport || !data[mainAirport]) return null
     const allData = data[mainAirport]
     const result = Object.fromEntries(Object.entries(allData).slice(0, -2))
-    console.log('Airport Full Data:', result)
+    // console.log('Airport Filtered Data:', result)
     return result
   }, [data, mainAirport])
 

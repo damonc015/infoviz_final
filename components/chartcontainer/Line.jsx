@@ -14,7 +14,6 @@ const LineChart = ({ data, delayType, rangeValues }) => {
       const width = container.clientWidth
       const height = container.clientHeight
 
-      // Clear previous chart and tooltip
       d3.select(container).selectAll('.tooltip').remove()
       const svg = d3.select(svgRef.current).html(null).attr('width', width).attr('height', height)
 
@@ -24,14 +23,14 @@ const LineChart = ({ data, delayType, rangeValues }) => {
 
       const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`)
 
+      //   monthly data points
       try {
-        // Process monthly data
         const monthlyData = []
         Object.entries(data)
           .filter(([year]) => year >= rangeValues[0] && year <= rangeValues[1])
           .forEach(([year, months]) => {
             Object.entries(months).forEach(([month, monthData]) => {
-              // Sum all carrier_ct values for this month
+              // Sum of all carrier_ct values for this month
               const totalDelay = Object.values(monthData).reduce(
                 (sum, airline) => sum + (airline[`${delayType}_ct`] || 0),
                 0
@@ -51,13 +50,13 @@ const LineChart = ({ data, delayType, rangeValues }) => {
           return
         }
 
-        // Sort data chronologically
+        // sort data chronologically
         monthlyData.sort((a, b) => {
           if (a.year !== b.year) return a.year - b.year
           return a.month - b.month
         })
 
-        // Create sequential x-axis positions
+        // x-axis positions
         const xScale = d3
           .scalePoint()
           .domain(monthlyData.map((d) => d.label))
@@ -70,18 +69,18 @@ const LineChart = ({ data, delayType, rangeValues }) => {
           .range([innerHeight, 0])
           .nice()
 
-        // Line generator
+        // make line
         const line = d3
           .line()
           .x((d) => xScale(d.label))
           .y((d) => yScale(d.value))
 
-        // Modified x-axis with yearly labels
+        // x axis yearly labels
         g.append('g')
           .attr('transform', `translate(0,${innerHeight})`)
           .call(
             d3.axisBottom(xScale).tickFormat((d, i) => {
-              // Only show year for January (month 1)
+              // show year only for january
               const [month, year] = d.split("'")
               return month === '1' ? '20' + year : ''
             })
@@ -93,8 +92,9 @@ const LineChart = ({ data, delayType, rangeValues }) => {
 
         g.append('g').call(d3.axisLeft(yScale).ticks(height > 150 ? 5 : 3))
 
-        // Create tooltip div inside the container
-        const tooltip = d3.select(container)
+        // tooltip
+        const tooltip = d3
+          .select(container)
           .append('div')
           .attr('class', 'tooltip')
           .style('position', 'absolute')
@@ -105,9 +105,9 @@ const LineChart = ({ data, delayType, rangeValues }) => {
           .style('visibility', 'hidden')
           .style('z-index', '10')
           .style('font-size', '12px')
-          .style('pointer-events', 'none') // Prevent tooltip from interfering with hover
+          .style('pointer-events', 'none')
 
-        // Get color from schemeSet2 based on delayType
+        // pie colors
         const colorMap = {
           carrier: d3.schemeSet2[0],
           weather: d3.schemeSet2[1],
@@ -117,7 +117,6 @@ const LineChart = ({ data, delayType, rangeValues }) => {
         }
         const lineColor = colorMap[delayType] || 'rgb(75, 192, 192)'
 
-        // Add line with updated color
         g.append('path')
           .datum(monthlyData)
           .attr('fill', 'none')
@@ -125,7 +124,7 @@ const LineChart = ({ data, delayType, rangeValues }) => {
           .attr('stroke-width', 2)
           .attr('d', line)
 
-        // Modify dots with larger sizes, matching colors, and cursor pointer
+        //   dots
         g.selectAll('.dot')
           .data(monthlyData)
           .join('circle')
@@ -138,7 +137,6 @@ const LineChart = ({ data, delayType, rangeValues }) => {
           .on('mouseover', function (event, d) {
             d3.select(this).attr('r', 7).attr('fill', d3.color(lineColor).darker(0.2))
 
-            // Get container's position relative to viewport
             const containerRect = container.getBoundingClientRect()
             const mouseX = event.clientX - containerRect.left
             const mouseY = event.clientY - containerRect.top
@@ -154,7 +152,7 @@ const LineChart = ({ data, delayType, rangeValues }) => {
             tooltip.style('visibility', 'hidden')
           })
 
-        // Add bold title with title case and "Incidents"
+        // title
         g.append('text')
           .attr('x', innerWidth / 2)
           .attr('y', -margin.top / 2)
@@ -168,7 +166,6 @@ const LineChart = ({ data, delayType, rangeValues }) => {
               .join(' ')} Delay Incidents Over Time`
           )
 
-        // Return cleanup function
         return () => {
           tooltip.remove()
         }
@@ -180,36 +177,22 @@ const LineChart = ({ data, delayType, rangeValues }) => {
 
     renderChart()
 
-    // Add resize listener
     const handleResize = () => {
       renderChart()
     }
     window.addEventListener('resize', handleResize)
 
-    // Cleanup
     return () => {
       window.removeEventListener('resize', handleResize)
     }
   }, [data, delayType, rangeValues])
 
+  //   loader
   if (!data) {
     return (
-      <Box
-        w="100%"
-        h="200px"
-        bg="#e4edf6"
-        borderRadius="10px"
-        p={4}
-        boxShadow="sm"
-      >
+      <Box w="100%" h="200px" bg="#e4edf6" borderRadius="10px" p={4} boxShadow="sm">
         <Center h="100%">
-          <Spinner
-            thickness='4px'
-            speed='0.65s'
-            emptyColor='gray.200'
-            color='blue.500'
-            size='xl'
-          />
+          <Spinner thickness="4px" speed="0.65s" emptyColor="gray.200" color="blue.500" size="xl" />
         </Center>
       </Box>
     )
