@@ -56,7 +56,7 @@ const AirlineBar = ({ data, rangeValues }) => {
 
     const yScale = d3
       .scaleLinear()
-      .domain([0, d3.max(chartData, (d) => d.value)])
+      .domain([0, 15])
       .range([innerHeight, 0])
       .nice()
 
@@ -118,7 +118,10 @@ const AirlineBar = ({ data, rangeValues }) => {
         .style('text-anchor', 'middle')
         .style('font-size', '12px')
 
-      svg.append('g').call(d3.axisLeft(yScale)).selectAll('text').style('font-size', '12px')
+      svg.append('g')
+        .call(d3.axisLeft(yScale).ticks(15))
+        .selectAll('text')
+        .style('font-size', '12px')
 
       // title
       svg

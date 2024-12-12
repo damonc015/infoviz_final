@@ -19,7 +19,7 @@ const SidewaysBar = ({ data, rangeValues }) => {
       const height = container.clientHeight
 
       // Setup dimensions
-      const margin = { top: 40, right: 120, bottom: 60, left: 220 }
+      const margin = { top: 40, right: 120, bottom: 60, left: 160 }
       const innerWidth = width - margin.left - margin.right
       const innerHeight = height - margin.top - margin.bottom
 
