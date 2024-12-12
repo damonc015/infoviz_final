@@ -5,6 +5,7 @@ import * as turf from '@turf/turf'
 import { Center, Spinner } from '@chakra-ui/react'
 import { scaleLinear } from 'd3'
 
+// Define states for each region
 const regionStates = {
   newEngland: ['Maine', 'New Hampshire', 'Vermont', 'Massachusetts', 'Rhode Island', 'Connecticut'],
   midAtlantic: [
@@ -59,6 +60,7 @@ const regionStates = {
   ]
 }
 
+// Get region for selection
 const getRegionForSelection = (selection) => {
   switch (selection) {
     case 'all':
@@ -135,11 +137,6 @@ const Map = memo(({ data, selectedYear, selectedRegion, showAllAirports, metricT
 
     const airportDelays = {}
 
-    // Debug log to see what years are available in the data
-    console.log('Available years in data:', Object.keys(Object.values(data)[0]))
-    console.log('Selected year:', selectedYear)
-    console.log('Sample airport data structure:', data[Object.keys(data)[0]])
-
     // Process each airport's data
     Object.entries(data).forEach(([airportCode, airportData]) => {
       const yearData = airportData[selectedYear]
@@ -188,11 +185,11 @@ const Map = memo(({ data, selectedYear, selectedRegion, showAllAirports, metricT
     if (value === null) return ''
     switch (metricType) {
       case 'avgDelay':
-        return `${value.toFixed(2)} minutes`
+        return `${value.toFixed(2)} minutes/late-flight`
       case 'totalFlights':
         return `${value.toLocaleString()} flights`
       case 'totalDelay':
-        return `${(value/60).toFixed(0)} hours`
+        return `${(value/60).toFixed(0)} minutes`
       default:
         return `${value.toFixed(2)} minutes`
     }

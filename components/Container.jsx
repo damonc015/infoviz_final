@@ -22,53 +22,65 @@ import {
 const Container = () => {
   const { isOpen, onOpen, onClose } = useDisclosure()
   const [showChart, setShowChart] = useState('single')
-  const [mainAirport, setMainAirport] = useState('New York, NY: John F. Kennedy International')
+
+  // Fetched data
   const [airportData, setAirportData] = useState(null)
   const [airlinesData, setAirlinesData] = useState(null)
-  const [airports, setAirports] = useState([
-    { id: 'JFK', name: 'JFK' },
-    { id: 'LAX', name: 'LAX' },
-    { id: 'ORD', name: 'ORD' },
-    { id: 'ATL', name: 'ATL' }
-  ]);
 
-  const [airlines, setAirlines] = useState(() => {
-    if (!airlinesData) return [];
-    return Object.keys(airlinesData)
-      .slice(0, 2)
-      .map(airlineName => ({
-        id: airlineName,
-        name: airlineName,
-        years: airlinesData[airlineName] || {}
-      }));
-  });
+  // Page data
+  const [mainAirport, setMainAirport] = useState('New York, NY: John F. Kennedy International')
+  const [airports, setAirports] = useState(['New York, NY: John F. Kennedy International'])
+  const [airlines, setAirlines] = useState([])
+  // Map actions
+  const [selectedAction, setSelectedAction] = useState({ type: null, index: null })
 
-  const drawerControls = { onOpen, onClose }
+  const handleAirportSelect = (airport) => {
+    if (selectedAction.type === 'changeMain') {
+      setMainAirport(airport)
+    } else if (selectedAction.type === 'change') {
+      setAirports((prevAirports) => {
+        const newAirports = [...prevAirports]
+        newAirports[selectedAction.index] = airport
+        return newAirports
+      })
+    } else {
+      setAirports((prevAirports) => [...prevAirports, airport])
+    }
+    setSelectedAction({ type: null, index: null })
+    onClose()
+  }
 
+  const drawerControls = {
+    onOpen: () => onOpen(),
+    onClose: () => onClose(),
+    setSelectedAction
+  }
+
+  // Rearrange data
   useEffect(() => {
     csv('/Airline_Delay_Cause.csv')
       .then((csvData) => {
         const aggregatedAirportData = csvData.reduce((acc, row) => {
-          const airport = row.airport_name;
-          const year = row.year;
-          const month = row.month;
-          const carrier = row.carrier_name;
+          const airport = row.airport_name
+          const year = row.year
+          const month = row.month
+          const carrier = row.carrier_name
 
           if (isNaN(row.latitude) || isNaN(row.longitude)) {
-            return acc;
+            return acc
           }
 
           if (!acc[airport]) {
             acc[airport] = {
               latitude: +row.latitude,
               longitude: +row.longitude
-            };
+            }
           }
           if (!acc[airport][year]) {
-            acc[airport][year] = {};
+            acc[airport][year] = {}
           }
           if (!acc[airport][year][month]) {
-            acc[airport][year][month] = {};
+            acc[airport][year][month] = {}
           }
           if (!acc[airport][year][month][carrier]) {
             acc[airport][year][month][carrier] = {
@@ -87,29 +99,29 @@ const Container = () => {
               nas_delay: +row.nas_delay,
               security_delay: +row.security_delay,
               late_aircraft_delay: +row.late_aircraft_delay
-            };
+            }
           }
-          return acc;
-        }, {});
+          return acc
+        }, {})
 
         const aggregatedAirlinesData = csvData.reduce((acc, row) => {
-          const carrier = row.carrier_name;
-          const year = row.year;
-          const month = row.month;
-          const airport = row.airport_name;
+          const carrier = row.carrier_name
+          const year = row.year
+          const month = row.month
+          const airport = row.airport_name
 
           if (isNaN(row.latitude) || isNaN(row.longitude)) {
-            return acc;
+            return acc
           }
 
           if (!acc[carrier]) {
-            acc[carrier] = {};
+            acc[carrier] = {}
           }
           if (!acc[carrier][year]) {
-            acc[carrier][year] = {};
+            acc[carrier][year] = {}
           }
           if (!acc[carrier][year][month]) {
-            acc[carrier][year][month] = {};
+            acc[carrier][year][month] = {}
           }
           if (!acc[carrier][year][month][airport]) {
             acc[carrier][year][month][airport] = {
@@ -130,23 +142,25 @@ const Container = () => {
               nas_delay: +row.nas_delay,
               security_delay: +row.security_delay,
               late_aircraft_delay: +row.late_aircraft_delay
-            };
+            }
           }
-          return acc;
-        }, {});
-        console.log(aggregatedAirportData);
-        console.log(aggregatedAirlinesData);
-        setAirportData(aggregatedAirportData);
-        setAirlinesData(aggregatedAirlinesData);
+          return acc
+        }, {})
+        console.log(aggregatedAirportData)
+        console.log(aggregatedAirlinesData)
+        setAirportData(aggregatedAirportData)
+        setAirlinesData(aggregatedAirlinesData)
       })
       .catch((error) => {
-        console.error('Error loading CSV:', error);
-      });
-  }, []);
+        console.error('Error loading CSV:', error)
+      })
+  }, [])
 
   return (
     <Flex direction="column" h="100vh">
       <Box as="nav" bg="blue.500" color="white" p={4}>
+
+        {/* Nav */}
         <Tabs
           variant="enclosed"
           colorScheme="blue"
@@ -199,43 +213,32 @@ const Container = () => {
         </Tabs>
       </Box>
 
+      {/* Map */}
       <Drawer
         isOpen={isOpen}
         placement="top"
-        onClose={onClose}
+        onClose={() => {
+          onClose()
+          setSelectedAction({ type: null, index: null })
+        }}
         size="full"
         motionPreset="slideInTop"
-        transitionDuration="200ms"
-      >
-        <DrawerOverlay
-          bg="rgba(0, 0, 0, 0.2)"
-          transition="background 0.2s"
-        />
-        <DrawerContent
-          transition="transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)"
-        >
+        transitionDuration="200ms">
+        <DrawerOverlay bg="rgba(0, 0, 0, 0.2)" transition="background 0.2s" />
+        <DrawerContent transition="transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)">
           <DrawerCloseButton size="lg" p={6} fontSize="20px" />
-          <DrawerHeader ml={4} pt={6} fontSize="1.25rem">Select Airport</DrawerHeader>
+          <DrawerHeader ml={4} pt={6} fontSize="1.25rem">
+            Select Airport
+          </DrawerHeader>
           <DrawerBody>
-            <Box
-              opacity={isOpen ? 1 : 0}
-              transition="opacity 0.3s"
-              transitionDelay="0.2s"
-            >
-              {isOpen && (
-                <Mapcontainer
-                  data={airportData}
-                  onAirportSelect={(airport) => {
-                    setMainAirport(airport);
-                    onClose();
-                  }}
-                />
-              )}
+            <Box opacity={isOpen ? 1 : 0} transition="opacity 0.3s" transitionDelay="0.2s">
+              {isOpen && <Mapcontainer data={airportData} onAirportSelect={handleAirportSelect} />}
             </Box>
           </DrawerBody>
         </DrawerContent>
       </Drawer>
 
+      {/* Pages */}
       {showChart === 'single' && (
         <Chartcontainer
           data={airportData}

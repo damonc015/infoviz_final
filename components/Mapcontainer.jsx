@@ -9,15 +9,20 @@ const Mapcontainer = memo(({ data, onAirportSelect }) => {
   const [showAllAirports, setShowAllAirports] = useState(false)
   const [metricType, setMetricType] = useState('avgDelay')
 
+  // Map - Key
   const mapKey = `${selectedYear}-${selectedRegion}-${showAllAirports}-${metricType}`
 
+  // Menu - Years
   const years = Object.keys(data['Boston, MA: Logan International']).slice(0, -2)
+
+  // Menu - Metrics
   const metrics = [
     { value: 'avgDelay', label: 'Avg Delay Per Delayed Flight' },
     { value: 'totalFlights', label: 'Total Flights Delayed' },
     { value: 'totalDelay', label: 'Total Time Delayed' }
   ]
 
+  // Menu - Regions
   const regions = [
     { value: 'all', label: 'All Regions' },
     { value: '1', label: 'New England' },
@@ -90,7 +95,6 @@ const Mapcontainer = memo(({ data, onAirportSelect }) => {
           selectedRegion={selectedRegion}
           showAllAirports={showAllAirports}
           metricType={metricType}
-          metrics={metrics}
           onAirportSelect={onAirportSelect}
         />
       </div>

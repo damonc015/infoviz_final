@@ -32,14 +32,16 @@ const Multichart = ({
       }))
   }, [data, airlines])
 
-  const handleRemoveAirport = (id) => {
-    setAirports((prevAirports) => prevAirports.filter((airport) => airport.id !== id))
+  // Remove airport from airports array or airline from airlines array
+  const handleRemoveAirport = (airport, indexToRemove) => {
+    setAirports((prevAirports) => prevAirports.filter((_, index) => index !== indexToRemove))
   }
 
   const handleRemoveAirline = (id) => {
     setAirlines((prevAirlines) => prevAirlines.filter((airline) => airline.id !== id))
   }
 
+  // Update airline in airlines array
   const handleUpdateAirline = (currentId, newAirline) => {
     setAirlines((prevAirlines) =>
       prevAirlines.map((airline) => (airline.id === currentId ? newAirline : airline))
@@ -60,9 +62,11 @@ const Multichart = ({
         }, 1fr)`}
         gap={0.5}
         w="100%">
-        {(type === 'airports' ? airports : airlines).slice(0, 4).map((item) => (
+
+        {/* GRID ITEMS - AIRPORTS OR AIRLINES */}
+        {(type === 'airports' ? airports : airlines).slice(0, 4).map((item, index) => (
           <GridItem
-            key={item.id}
+            key={`${item}-${index}`}
             h="100%"
             display="flex"
             flexDir="column"
@@ -74,6 +78,7 @@ const Multichart = ({
                 airportData={item}
                 drawerControls={drawerControls}
                 onRemove={handleRemoveAirport}
+                index={index}
               />
             ) : (
               <AirlineSelection

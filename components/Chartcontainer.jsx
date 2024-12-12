@@ -60,6 +60,11 @@ const Chartcontainer = ({ data, mainAirport, drawerControls }) => {
       .filter((item) => item.value > 0) // Only include delays > 0
   }, [data, mainAirport, rangeValues])
 
+  const handleAirportChange = () => {
+    drawerControls.setSelectedAction({ type: 'changeMain', index: 0 })
+    drawerControls.onOpen()
+  }
+
   return (
     <Grid
       templateColumns="40% 60%"
@@ -68,8 +73,8 @@ const Chartcontainer = ({ data, mainAirport, drawerControls }) => {
       w="100%"
       p={4}
       bgColor="#b0d4f8"
-      h="auto"
-    >
+      flex={1}
+      overflow="auto">
       <GridItem colSpan={1}>
         <Flex direction="column" gap={4} justifyContent="flex-start" alignItems="center">
           <Box position="relative" w="100%" maxW="300px">
@@ -80,7 +85,7 @@ const Chartcontainer = ({ data, mainAirport, drawerControls }) => {
               color="white"
               w="100%"
               borderRadius="none"
-              onClick={drawerControls.onOpen}
+              onClick={handleAirportChange}
               sx={{
                 _hover: {
                   bgColor: '#466a9e',
@@ -105,7 +110,7 @@ const Chartcontainer = ({ data, mainAirport, drawerControls }) => {
               </Box>
             </Flex>
           ) : (
-            <Flex justify="space-between" w="50%" mb={2}>
+            <Flex justify="space-between" w="60%" mb={2}>
               <Box textAlign="center">
                 <Text fontSize="sm" fontWeight="bold">
                   From
