@@ -1,9 +1,7 @@
 'use client'
-import React, { memo, Suspense, lazy, useState } from 'react'
-import { Select, Flex, FormControl, FormLabel, Spinner, Center, Switch } from '@chakra-ui/react'
-
-// Lazy load the Map component
-const Map = lazy(() => import('./mapcontainer/Map'))
+import React, { memo, useState } from 'react'
+import { Select, Flex, FormControl, FormLabel, Switch } from '@chakra-ui/react'
+import Map from './mapcontainer/Map'
 
 const Mapcontainer = memo(({ data, onAirportSelect }) => {
   const [selectedYear, setSelectedYear] = useState('2013')
@@ -85,28 +83,16 @@ const Mapcontainer = memo(({ data, onAirportSelect }) => {
         </FormControl>
       </Flex>
       <div style={{ width: '100%', height: 'calc(80vh - 100px)' }}>
-        <Suspense fallback={
-          <Center h="100%">
-            <Spinner
-              thickness='4px'
-              speed='0.65s'
-              emptyColor='gray.200'
-              color='blue.500'
-              size='xl'
-            />
-          </Center>
-        }>
-          <Map
-            key={mapKey}
-            data={data}
-            selectedYear={selectedYear}
-            selectedRegion={selectedRegion}
-            showAllAirports={showAllAirports}
-            metricType={metricType}
-            metrics={metrics}
-            onAirportSelect={onAirportSelect}
-          />
-        </Suspense>
+        <Map
+          key={mapKey}
+          data={data}
+          selectedYear={selectedYear}
+          selectedRegion={selectedRegion}
+          showAllAirports={showAllAirports}
+          metricType={metricType}
+          metrics={metrics}
+          onAirportSelect={onAirportSelect}
+        />
       </div>
     </>
   )

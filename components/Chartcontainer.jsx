@@ -1,5 +1,6 @@
 'use client'
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
+import Pie from './chartcontainer/Pie'
 import {
   Button,
   Box,
@@ -14,14 +15,50 @@ import {
 } from '@chakra-ui/react'
 
 const Chartcontainer = ({ data, mainAirport, drawerControls }) => {
-  // Get available years for the selected airport
-  const years = data && mainAirport && data[mainAirport] ? Object.keys(data[mainAirport])
-    .filter(key => !isNaN(key))
-    .map(Number) : [2013]  // Default to 2013 if no data
+  const years =
+    data && mainAirport && data[mainAirport]
+      ? Object.keys(data[mainAirport])
+          .filter((key) => !isNaN(key))
+          .map(Number)
+      : [2013]
   const minYear = years.length > 0 ? Math.min(...years) : 2013
   const maxYear = years.length > 0 ? Math.max(...years) : 2013
 
   const [rangeValues, setRangeValues] = useState([minYear, minYear])
+
+  const filteredData = useMemo(() => {
+    if (!data || !mainAirport || !data[mainAirport]) return null
+
+    let totalDelays = {
+      'Carrier Delay': 0,
+      'Weather Delay': 0,
+      'NAS Delay': 0,
+      'Security Delay': 0,
+      'Late Aircraft Delay': 0
+    }
+
+    // Loop through selected years
+    for (let year = rangeValues[0]; year <= rangeValues[1]; year++) {
+      if (data[mainAirport][year]) {
+        // Loop through all months
+        Object.values(data[mainAirport][year]).forEach((monthData) => {
+          // Sum up delays from all carriers in each month
+          Object.values(monthData).forEach((carrierData) => {
+            totalDelays['Carrier Delay'] += carrierData.carrier_delay || 0
+            totalDelays['Weather Delay'] += carrierData.weather_delay || 0
+            totalDelays['NAS Delay'] += carrierData.nas_delay || 0
+            totalDelays['Security Delay'] += carrierData.security_delay || 0
+            totalDelays['Late Aircraft Delay'] += carrierData.late_aircraft_delay || 0
+          })
+        })
+      }
+    }
+
+    // Convert to array format for D3
+    return Object.entries(totalDelays)
+      .map(([name, value]) => ({ name, value }))
+      .filter((item) => item.value > 0) // Only include delays > 0
+  }, [data, mainAirport, rangeValues])
 
   return (
     <Grid
@@ -31,7 +68,7 @@ const Chartcontainer = ({ data, mainAirport, drawerControls }) => {
       w="100%"
       p={4}
       bgColor="#b0d4f8"
-      flex={1}
+      h="auto"
     >
       <GridItem colSpan={1}>
         <Flex direction="column" gap={4} justifyContent="flex-start" alignItems="center">
@@ -54,7 +91,9 @@ const Chartcontainer = ({ data, mainAirport, drawerControls }) => {
             </Button>
           </Box>
 
-          <Text fontWeight="bold" textAlign="center">{mainAirport}</Text>
+          <Text fontWeight="bold" textAlign="center">
+            {mainAirport}
+          </Text>
 
           {rangeValues[0] === rangeValues[1] ? (
             <Flex justify="center" w="90%" mb={2}>
@@ -97,16 +136,19 @@ const Chartcontainer = ({ data, mainAirport, drawerControls }) => {
             <RangeSliderThumb index={0} />
             <RangeSliderThumb index={1} />
           </RangeSlider>
+
+          <Text fontSize="xl" fontWeight="bold" mt={4}>
+            Delay Types
+          </Text>
+          <Box w="100%" flex={1} minH="200px">
+            <Pie data={filteredData} />
+          </Box>
         </Flex>
       </GridItem>
 
-      <GridItem colSpan={1}>
-        {/* Right side content (60% width) */}
-      </GridItem>
+      <GridItem colSpan={1}>{/* Right side content */}</GridItem>
 
-      <GridItem colSpan={2}>
-        {/* Bottom content (100% width) */}
-      </GridItem>
+      <GridItem colSpan={2}>{/* Bottom content */}</GridItem>
     </Grid>
   )
 }

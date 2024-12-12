@@ -1,5 +1,5 @@
 // components/mapcontainer/Map.jsx
-import React, { useEffect, useRef, useState, memo } from 'react'
+import React, { useEffect, useRef, useState, memo, useMemo } from 'react'
 import * as d3 from 'd3'
 import * as turf from '@turf/turf'
 import { Center, Spinner } from '@chakra-ui/react'
@@ -84,8 +84,27 @@ const Map = memo(({ data, selectedYear, selectedRegion, showAllAirports, metricT
   const svgRef = useRef(null)
   const [isLoading, setIsLoading] = useState(true)
   const [geoData, setGeoData] = useState(null)
-  const [validAirportPoints, setValidAirportPoints] = useState([])
   const [airportDelayData, setAirportDelayData] = useState({})
+
+  const validAirportPoints = useMemo(() => {
+    if (!data || !geoData) return []
+
+    return Object.entries(data)
+      .map(([airportName, coords]) => {
+        const point = turf.point([coords.longitude, coords.latitude])
+        const isInRegion = geoData.features.some((feature) =>
+          turf.booleanPointInPolygon(point, feature)
+        )
+        return isInRegion
+          ? {
+              name: airportName,
+              lat: coords.latitude,
+              lon: coords.longitude
+            }
+          : null
+      })
+      .filter((airport) => airport !== null)
+  }, [data, geoData])
 
   useEffect(() => {
     const loadGeoData = async () => {
@@ -109,33 +128,6 @@ const Map = memo(({ data, selectedYear, selectedRegion, showAllAirports, metricT
 
     loadGeoData()
   }, [selectedRegion])
-
-  // Filter airports based on selected year and quarter
-  useEffect(() => {
-    if (data && geoData) {
-      // Create points for all valid coordinates
-      const filteredPoints = Object.entries(data)
-        .map(([airportName, coords]) => {
-          const point = turf.point([coords.longitude, coords.latitude])
-
-          // Check if the point is within any of the selected region's features
-          const isInRegion = geoData.features.some((feature) =>
-            turf.booleanPointInPolygon(point, feature)
-          )
-
-          return isInRegion
-            ? {
-                name: airportName,
-                lat: coords.latitude,
-                lon: coords.longitude
-              }
-            : null
-        })
-        .filter((airport) => airport !== null)
-
-      setValidAirportPoints(filteredPoints)
-    }
-  }, [data, selectedYear, selectedRegion, geoData])
 
   // Add new useEffect to process delay data
   useEffect(() => {
@@ -218,6 +210,7 @@ const Map = memo(({ data, selectedYear, selectedRegion, showAllAirports, metricT
         .map(d => getMetricValue(d))
         .filter(value => value !== null)
 
+      console.log(currentYearDelays)
       const minValue = Math.min(...currentYearDelays)
       const maxValue = Math.max(...currentYearDelays)
 
@@ -286,17 +279,11 @@ const Map = memo(({ data, selectedYear, selectedRegion, showAllAirports, metricT
 
           d3.select(this).transition().duration(200).attr('r', 9)
 
-          const delayData = airportDelayData[d.name]
-          const metricValue = getMetricValue(delayData)
-          const tooltipText = metricValue !== null
-            ? `${d.name}\n${metrics.find(m => m.value === metricType).label}: ${getMetricLabel(metricValue)}`
-            : d.name
-
           g.append('text')
             .attr('class', 'tooltip')
             .attr('x', coords[0] + 10)
             .attr('y', coords[1])
-            .text(tooltipText)
+            .text(d.name)
             .style('fill', 'black')
             .style('font-size', '12px')
         })
@@ -388,17 +375,11 @@ const Map = memo(({ data, selectedYear, selectedRegion, showAllAirports, metricT
 
             d3.select(this).transition().duration(200).attr('r', 9)
 
-            const delayData = airportDelayData[d.name]
-            const metricValue = getMetricValue(delayData)
-            const tooltipText = metricValue !== null
-              ? `${d.name}\n${metrics.find(m => m.value === metricType).label}: ${getMetricLabel(metricValue)}`
-              : d.name
-
             g.append('text')
               .attr('class', 'tooltip')
               .attr('x', coords[0] + 10)
               .attr('y', coords[1])
-              .text(tooltipText)
+              .text(d.name)
               .style('fill', 'black')
               .style('font-size', '12px')
           })

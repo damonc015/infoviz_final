@@ -199,19 +199,39 @@ const Container = () => {
         </Tabs>
       </Box>
 
-      <Drawer isOpen={isOpen} placement="top" onClose={onClose} size="full">
-        <DrawerOverlay />
-        <DrawerContent>
+      <Drawer
+        isOpen={isOpen}
+        placement="top"
+        onClose={onClose}
+        size="full"
+        motionPreset="slideInTop"
+        transitionDuration="200ms"
+      >
+        <DrawerOverlay
+          bg="rgba(0, 0, 0, 0.2)"
+          transition="background 0.2s"
+        />
+        <DrawerContent
+          transition="transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)"
+        >
           <DrawerCloseButton size="lg" p={6} fontSize="20px" />
-          <DrawerHeader>Select Airport</DrawerHeader>
+          <DrawerHeader ml={4} pt={6} fontSize="1.25rem">Select Airport</DrawerHeader>
           <DrawerBody>
-            <Mapcontainer
-              data={airportData}
-              onAirportSelect={(airport) => {
-                setMainAirport(airport);
-                onClose(); // Close the drawer after selection
-              }}
-            />
+            <Box
+              opacity={isOpen ? 1 : 0}
+              transition="opacity 0.3s"
+              transitionDelay="0.2s"
+            >
+              {isOpen && (
+                <Mapcontainer
+                  data={airportData}
+                  onAirportSelect={(airport) => {
+                    setMainAirport(airport);
+                    onClose();
+                  }}
+                />
+              )}
+            </Box>
           </DrawerBody>
         </DrawerContent>
       </Drawer>
