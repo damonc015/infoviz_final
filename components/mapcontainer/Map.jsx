@@ -297,7 +297,6 @@ const Map = memo(({ data, selectedYear, selectedRegion, showAllAirports, metricT
           }
         })
 
-      // Handle window resize
       const handleResize = () => {
         const newWidth = container.clientWidth
         const newHeight = container.clientHeight
@@ -396,7 +395,6 @@ const Map = memo(({ data, selectedYear, selectedRegion, showAllAirports, metricT
 
       window.addEventListener('resize', handleResize)
 
-      // Cleanup
       return () => {
         window.removeEventListener('resize', handleResize)
       }
@@ -412,8 +410,51 @@ const Map = memo(({ data, selectedYear, selectedRegion, showAllAirports, metricT
   }
 
   return (
-    <div style={{ width: '100%', height: '100%', position: 'relative' }}>
-      <svg ref={svgRef}></svg>
+    <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <svg ref={svgRef} style={{ flex: 1 }}></svg>
+      <svg
+        height={50}
+        width="100%"
+        style={{
+          marginTop: '10px',
+          minHeight: '50px'
+        }}>
+        <defs>
+          <linearGradient id="colorGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#00ff00" />
+            <stop offset="100%" stopColor="#ff0000" />
+          </linearGradient>
+        </defs>
+        <g transform={`translate(${window.innerWidth * 0.35}, 10)`}>
+          <rect
+            width={window.innerWidth * 0.3}
+            height={20}
+            fill="url(#colorGradient)"
+            stroke="#ccc"
+            strokeWidth="0.5"
+          />
+          <text
+            x={-5}
+            y={35}
+            textAnchor="start"
+            fontSize="12px"
+          >
+            {getMetricLabel(Math.min(...Object.values(airportDelayData)
+              .map(d => getMetricValue(d))
+              .filter(v => v !== null)))}
+          </text>
+          <text
+            x={window.innerWidth * 0.3 + 5}
+            y={35}
+            textAnchor="end"
+            fontSize="12px"
+          >
+            {getMetricLabel(Math.max(...Object.values(airportDelayData)
+              .map(d => getMetricValue(d))
+              .filter(v => v !== null)))}
+          </text>
+        </g>
+      </svg>
     </div>
   )
 })
