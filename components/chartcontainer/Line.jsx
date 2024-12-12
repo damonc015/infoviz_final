@@ -14,7 +14,8 @@ const LineChart = ({ data, delayType, rangeValues }) => {
       const width = container.clientWidth
       const height = container.clientHeight
 
-      // Clear previous chart
+      // Clear previous chart and tooltip
+      d3.select(container).selectAll('.tooltip').remove()
       const svg = d3.select(svgRef.current).html(null).attr('width', width).attr('height', height)
 
       const margin = { top: 40, right: 30, bottom: 50, left: 60 }
@@ -92,10 +93,10 @@ const LineChart = ({ data, delayType, rangeValues }) => {
 
         g.append('g').call(d3.axisLeft(yScale).ticks(height > 150 ? 5 : 3))
 
-        // Create tooltip before using it
-        const tooltip = d3
-          .select('body')
+        // Create tooltip div inside the container
+        const tooltip = d3.select(container)
           .append('div')
+          .attr('class', 'tooltip')
           .style('position', 'absolute')
           .style('background-color', 'white')
           .style('padding', '5px')
@@ -104,6 +105,7 @@ const LineChart = ({ data, delayType, rangeValues }) => {
           .style('visibility', 'hidden')
           .style('z-index', '10')
           .style('font-size', '12px')
+          .style('pointer-events', 'none') // Prevent tooltip from interfering with hover
 
         // Get color from schemeSet2 based on delayType
         const colorMap = {
@@ -136,15 +138,19 @@ const LineChart = ({ data, delayType, rangeValues }) => {
           .on('mouseover', function (event, d) {
             d3.select(this).attr('r', 7).attr('fill', d3.color(lineColor).darker(0.2))
 
+            // Get container's position relative to viewport
+            const containerRect = container.getBoundingClientRect()
+            const mouseX = event.clientX - containerRect.left
+            const mouseY = event.clientY - containerRect.top
+
             tooltip
               .style('visibility', 'visible')
               .html(`${d.month}/${d.year}<br>${Math.round(d.value)} delays`)
-              .style('left', event.pageX + 10 + 'px')
-              .style('top', event.pageY - 10 + 'px')
+              .style('left', `${mouseX + 10}px`)
+              .style('top', `${mouseY - 10}px`)
           })
           .on('mouseout', function () {
             d3.select(this).attr('r', 4).attr('fill', lineColor)
-
             tooltip.style('visibility', 'hidden')
           })
 
@@ -162,7 +168,7 @@ const LineChart = ({ data, delayType, rangeValues }) => {
               .join(' ')} Delay Incidents Over Time`
           )
 
-        // Add cleanup for tooltip inside the try block
+        // Return cleanup function
         return () => {
           tooltip.remove()
         }
@@ -217,7 +223,8 @@ const LineChart = ({ data, delayType, rangeValues }) => {
       bg="#e4edf6"
       borderRadius="10px"
       p={4}
-      boxShadow="sm">
+      boxShadow="sm"
+      position="relative">
       <svg ref={svgRef} style={{ width: '100%', height: '100%' }} />
     </Box>
   )

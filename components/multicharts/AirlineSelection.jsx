@@ -15,51 +15,51 @@ import {
   VStack
 } from '@chakra-ui/react'
 import Pie from '../chartcontainer/Pie'
+import Line from '../chartcontainer/Line'
+import AirlineBar from '../chartcontainer/AirlineBar'
 
 const AirlineSelection = ({ data, airlineData, onRemove, availableAirlines, onUpdate }) => {
   // Filter data for the selected airline
   const filteredData = useMemo(() => {
     if (!data || !airlineData?.name) {
-      console.log('Missing required data:', { data, airlineDataName: airlineData?.name });
-      return null;
+      console.log('Missing required data:', { data, airlineDataName: airlineData?.name })
+      return null
     }
 
     // Directly access the airline data using the name as the key
-    const airlineEntry = data[airlineData.name];
+    const airlineEntry = data[airlineData.name]
 
     if (!airlineEntry) {
-      console.log('No matching airline found for:', airlineData.name);
-      return null;
+      console.log('No matching airline found for:', airlineData.name)
+      return null
     }
 
-    return airlineEntry || null;
-  }, [data, airlineData]);
+    return airlineEntry || null
+  }, [data, airlineData])
 
   // Calculate min and max years using filteredData
   const [minYear, maxYear] = useMemo(() => {
     if (!filteredData) {
-      console.log('No filtered data available, using default years [2013, 2013]');
-      return [2013, 2013];
+      return [2013, 2013]
     }
 
     const years = Object.keys(filteredData)
-      .filter(key => !isNaN(key))
-      .map(Number);
+      .filter((key) => !isNaN(key))
+      .map(Number)
 
-    console.log('Available years:', years);
-    console.log('Min year:', Math.min(...years));
-    console.log('Max year:', Math.max(...years));
+    return [Math.min(...years), Math.max(...years)]
+  }, [filteredData])
 
-    return [Math.min(...years), Math.max(...years)];
-  }, [filteredData]);
-
-  // Initialize range values with the full range
+  // Initialize range values
   const [rangeValues, setRangeValues] = useState([2013, 2013])
 
   // Update range values when min/max years change
   useEffect(() => {
     setRangeValues([minYear, maxYear])
   }, [minYear, maxYear])
+
+  // Define delay types
+  const delayTypes = ['carrier', 'weather', 'nas', 'security', 'late_aircraft']
 
   return (
     <>
@@ -111,9 +111,9 @@ const AirlineSelection = ({ data, airlineData, onRemove, availableAirlines, onUp
       <Text my={2} fontWeight="bold">
         {airlineData.name}
       </Text>
-      {filteredData?.fullData && (
-        <Pie data={filteredData.fullData} />
-      )}
+      {filteredData?.fullData && <Pie data={filteredData.fullData} />}
+
+      {/* Year range display */}
       {rangeValues[0] === rangeValues[1] ? (
         <Flex justify="center" w="90%" mb={2}>
           <Box textAlign="center">
@@ -139,6 +139,7 @@ const AirlineSelection = ({ data, airlineData, onRemove, availableAirlines, onUp
           </Box>
         </Flex>
       )}
+
       <RangeSlider
         aria-label={['min', 'max']}
         value={rangeValues}
@@ -149,14 +150,27 @@ const AirlineSelection = ({ data, airlineData, onRemove, availableAirlines, onUp
         colorScheme="blue"
         onChange={(val) => setRangeValues(val)}
         w="90%"
-        isReadOnly={false}
-      >
+        isReadOnly={false}>
         <RangeSliderTrack bg="#8fc0f1">
           <RangeSliderFilledTrack />
         </RangeSliderTrack>
         <RangeSliderThumb index={0} />
         <RangeSliderThumb index={1} />
       </RangeSlider>
+
+      {/* Add AirlineBar with margin */}
+      <Box w="100%" h="400px" mb={4} mt={8}>
+        <AirlineBar data={filteredData} rangeValues={rangeValues} />
+      </Box>
+
+      {/* Existing Line Charts */}
+      <VStack spacing={4} w="100%" mt={4}>
+        {delayTypes.map((delayType) => (
+          <Box key={delayType} w="100%" h="200px">
+            <Line data={filteredData} delayType={delayType} rangeValues={rangeValues} />
+          </Box>
+        ))}
+      </VStack>
     </>
   )
 }
